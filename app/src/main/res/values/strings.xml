@@ -1,0 +1,14 @@
+<resources>
+    <string name="app_name">XPhoto</string>
+    <string name="facebook_app_id">879678552085487</string>
+
+    <string name="action_settings">Settings</string>
+    <string name="title_activity_photo_manager">PhotoManagerActivity</string>
+
+    <string name="title_activity_shared_photo_manager">SharedPhotoManager</string>
+    <string name="title_activity_contacts">Contacts</string>
+
+    <string name="tab_text_protected_photos">Protected Photos</string>
+    <string name="tab_text_shared_photos">Shared Photos</string>
+    <string name="tab_text_contacts">Contacts</string>
+</resources>
