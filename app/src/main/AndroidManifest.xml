@@ -39,6 +39,10 @@
             android:name=".Contacts"
             android:label="@string/title_activity_contacts" >
         </activity>
+        <activity
+            android:name=".PhotoDetailsActivity"
+            android:label="@string/title_activity_photo_details" >
+        </activity>
     </application>
 
 </manifest>
