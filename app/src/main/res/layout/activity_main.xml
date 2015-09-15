@@ -11,8 +11,7 @@ android:layout_height="fill_parent">
         android:id="@android:id/tabcontent"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
-        android:layout_above="@android:id/tabs"
-        android:padding="@dimen/activity_vertical_margin" />
+        android:layout_above="@android:id/tabs"/>
 
     <TabWidget
         android:id="@android:id/tabs"

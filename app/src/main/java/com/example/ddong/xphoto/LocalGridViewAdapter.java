@@ -43,9 +43,15 @@ public class LocalGridViewAdapter extends ArrayAdapter {
             holder = (ViewHolder) row.getTag();
         }
 
-        ImageItem item = (ImageItem) data.get(position);
-        holder.imageTitle.setText(item.getTitle());
-        holder.image.setImageBitmap(item.getImage());
+        if(position == 0) {
+            holder.imageTitle.setText(R.string.add_photo);
+            holder.image.setImageResource(R.drawable.ic_add_black_48dp);
+        }
+        else {
+            ImageItem item = (ImageItem) data.get(position);
+            holder.imageTitle.setText(item.getTitle());
+            holder.image.setImageBitmap(item.getImage());
+        }
         return row;
     }
 

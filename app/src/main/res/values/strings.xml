@@ -34,7 +34,7 @@
     </string-array>
     <string name="title_activity_photo_details">PhotoDetailsActivity</string>
 
-    <string name="hello_world">Hello world!</string>
+    <string name="add_photo">Add Photo</string>
 
 
 </resources>
