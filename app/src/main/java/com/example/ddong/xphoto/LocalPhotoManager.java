@@ -60,8 +60,7 @@ public class LocalPhotoManager extends AppCompatActivity {
                     ImageItem item = (ImageItem) parent.getItemAtPosition(position);
                     //Create intent
                     Intent intent = new Intent(LocalPhotoManager.this, PhotoDetailsActivity.class);
-                    intent.putExtra("path", item.getPath());
-                    intent.putExtra("title", item.getTitle());
+                    intent.putExtra("position", position);
                     //Start details activity
                     startActivity(intent);
                 }

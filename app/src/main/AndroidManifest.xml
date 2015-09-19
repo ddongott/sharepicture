@@ -42,7 +42,8 @@
         </activity>
         <activity
             android:name=".PhotoDetailsActivity"
-            android:label="@string/title_activity_photo_details" >
+            android:label="@string/title_activity_photo_details"
+            android:theme="@android:style/Theme.Holo.NoActionBar">
         </activity>
     </application>
 
