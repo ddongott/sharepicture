@@ -1,11 +1,19 @@
 package com.example.ddong.xphoto;
 
+import android.content.ClipData;
+import android.content.Context;
 import android.content.Intent;
-import android.content.res.TypedArray;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.media.ExifInterface;
+import android.media.ThumbnailUtils;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
+import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -13,27 +21,38 @@ import android.widget.AdapterView;
 import android.widget.GridView;
 import android.widget.Toast;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 
 public class LocalPhotoManager extends AppCompatActivity {
+    public final static String TABLE_NAME = "ProtectPhotos";
+    private String TAG = "LocalPhotoManager";
     private static int RESULT_LOAD_IMG = 1;
-    private GridView gridView;
-    private LocalGridViewAdapter gridAdapter;
+    private GridView mGridView;
+    private LocalGridViewAdapter mGridAdapter;
+    private XPDatabaseOperation mDB;
+    final ArrayList<ImageItem> mImageItems = new ArrayList<>();
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_photo_manager);
+        mDB = new XPDatabaseOperation(getApplicationContext(),TABLE_NAME);
 
-        gridView = (GridView) findViewById(R.id.gridView);
-        gridAdapter = new LocalGridViewAdapter(this, R.layout.grid_item_layout, getData());
-        gridView.setAdapter(gridAdapter);
-        gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        mGridView = (GridView) findViewById(R.id.gridView);
+        mGridAdapter = new LocalGridViewAdapter(this, R.layout.grid_item_layout, getData());
+        mGridView.setAdapter(mGridAdapter);
+        mGridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             public void onItemClick(AdapterView<?> parent, View v, int position, long id) {
                 if(position == 0) {
                     // Create intent to Open Image applications like Gallery, Google Photos
                     Intent galleryIntent = new Intent(Intent.ACTION_PICK,
                             android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
                     galleryIntent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+                    galleryIntent.putExtra(Intent.EXTRA_LOCAL_ONLY, true);
                     // Start the Intent
                     startActivityForResult(galleryIntent, RESULT_LOAD_IMG);
                 }
@@ -41,9 +60,8 @@ public class LocalPhotoManager extends AppCompatActivity {
                     ImageItem item = (ImageItem) parent.getItemAtPosition(position);
                     //Create intent
                     Intent intent = new Intent(LocalPhotoManager.this, PhotoDetailsActivity.class);
+                    intent.putExtra("path", item.getPath());
                     intent.putExtra("title", item.getTitle());
-                    intent.putExtra("image", item.getImage());
-
                     //Start details activity
                     startActivity(intent);
                 }
@@ -53,13 +71,31 @@ public class LocalPhotoManager extends AppCompatActivity {
 
     // Prepare some dummy data for gridview
     private ArrayList<ImageItem> getData() {
-        final ArrayList<ImageItem> imageItems = new ArrayList<>();
-        TypedArray imgs = getResources().obtainTypedArray(R.array.image_ids);
-        for (int i = 0; i < imgs.length(); i++) {
-            Bitmap bitmap = BitmapFactory.decodeResource(getResources(), imgs.getResourceId(i, -1));
-            imageItems.add(new ImageItem(bitmap, "Image#" + i));
+
+        Cursor cursor = null;
+        Log.d(TAG, "getData");
+        Bitmap bp = BitmapFactory.decodeResource(getResources(), R.drawable.ic_add_black_48dp);
+        mImageItems.add(new ImageItem(bp, getString(R.string.add_photo), null));
+        try {
+            cursor = mDB.selectRecords();
+            int row = cursor.getCount();
+            for(int i = 0; i < row; i++){
+                int id = cursor.getInt(cursor.getColumnIndexOrThrow(XPDatabaseOperation.PHOTO_ID));
+                String thumbpath = cursor.getString(cursor.getColumnIndexOrThrow(XPDatabaseOperation.PHOTO_THUMB));
+                String path = cursor.getString(cursor.getColumnIndexOrThrow(XPDatabaseOperation.PHOTO_PATH));
+                Log.d(TAG,"thumbnail path: " + thumbpath);
+                Bitmap bitmap = BitmapFactory.decodeFile(thumbpath);
+                mImageItems.add(new ImageItem(bitmap, "Image#" + id, path));
+                cursor.moveToNext();
+            }
         }
-        return imageItems;
+        finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+        Log.d(TAG, "getData" + mImageItems.toString());
+        return mImageItems;
     }
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -83,6 +119,137 @@ public class LocalPhotoManager extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
+    private void copyFile(String sourcePath, String destPath) throws IOException {
+        File sourceFile = new File(sourcePath);
+        File destFile  = new File(destPath);
+        if (!destFile.exists())
+        {
+            try {
+                destFile.createNewFile();
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        }
+        if (!sourceFile.exists()) {
+            return;
+        }
+
+        FileChannel source = null;
+        FileChannel destination = null;
+        source = new FileInputStream(sourceFile).getChannel();
+        destination = new FileOutputStream(destFile).getChannel();
+        if (destination != null && source != null) {
+            destination.transferFrom(source, 0, source.size());
+        }
+        if (source != null) {
+            source.close();
+        }
+        if (destination != null) {
+            destination.close();
+        }
+
+
+    }
+
+    /* Checks if external storage is available for read and write */
+    public boolean isExternalStorageWritable() {
+        String state = Environment.getExternalStorageState();
+        if (Environment.MEDIA_MOUNTED.equals(state)) {
+            return true;
+        }
+        return false;
+    }
+
+    private String getThumbnail(String picPath) {
+        ExifInterface exif = null;
+        Bitmap thumbnail;
+        int THUMBSIZE = 128;
+        try {
+            exif = new ExifInterface(picPath);
+        }
+        catch (IOException e) {
+            Log.w(TAG, "No exif data for: " + picPath);
+        }
+
+        if (exif != null) {
+            byte[] imageData = exif.getThumbnail();
+            thumbnail = BitmapFactory.decodeByteArray(imageData, 0, imageData.length);
+        }
+        else {
+            thumbnail = ThumbnailUtils.extractThumbnail(BitmapFactory.decodeFile(picPath), THUMBSIZE, THUMBSIZE);
+
+        }
+        mImageItems.add(new ImageItem(thumbnail, "", picPath));
+
+        String thumbfilename = picPath.substring(picPath.lastIndexOf("/") + 1);
+        File thumbfolder = Environment.getExternalStoragePublicDirectory(getString(R.string.data_storage_folder) + "/.thumbnail");
+        if (!thumbfolder.exists()) {
+            thumbfolder.mkdirs();
+        }
+        File fThumb = new File(thumbfolder,thumbfilename);
+        FileOutputStream outputStream;
+
+        try {
+            outputStream = new FileOutputStream (fThumb);
+            thumbnail.compress(Bitmap.CompressFormat.JPEG, 100, outputStream);
+            outputStream.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return fThumb.getPath();
+    }
+
+    private void saveData(Context context, Uri contentUri) {
+        Cursor cursor = null;
+        Cursor thumbcursor = null;
+        String path = "";
+        String thumbnail = "";
+        if (!isExternalStorageWritable()) {
+            Log.e(TAG,"External storage not writable");
+            return;
+        }
+        try {
+            String[] proj = { MediaStore.Images.Media.DATA };
+            cursor = context.getContentResolver().query(contentUri, proj, null,
+                    null, null);
+            int column_index = cursor
+                    .getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
+            cursor.moveToFirst();
+            path = cursor.getString(column_index);
+            String filename = path.substring(path.lastIndexOf("/")+1);
+            File datafolder = Environment.getExternalStoragePublicDirectory(getString(R.string.data_storage_folder));
+            if (!datafolder.exists()) {
+                datafolder.mkdirs();
+                File nomediaFile = new File(datafolder, ".nomedia");
+                try {
+                    nomediaFile.createNewFile();
+                }
+                catch (IOException e) {
+                    Log.w(TAG, "Failed to create nomedia");
+                }
+            }
+            String dstpath = datafolder + "/" + filename;
+            try {
+                copyFile(path, dstpath);
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+
+            String thumbnailpath = getThumbnail(path);
+
+            mDB.createRecords(dstpath, thumbnailpath);
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+            if (thumbcursor != null) {
+                thumbcursor.close();
+            }
+        }
+    }
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -91,26 +258,18 @@ public class LocalPhotoManager extends AppCompatActivity {
             if (requestCode == RESULT_LOAD_IMG && resultCode == RESULT_OK
                     && null != data) {
                 // Get the Image from data
-/*
-                Uri selectedImage = data.getData();
-                String[] filePathColumn = { MediaStore.Images.Media.DATA };
+                ClipData clipData = data.getClipData();
+                if (clipData != null) {
+                    for (int i = 0; i < clipData.getItemCount(); i++) {
+                        ClipData.Item item = clipData.getItemAt(i);
+                        Uri uri = item.getUri();
+                        //In case you need image's absolute path
+                        saveData(getApplicationContext(), uri);
+                    }
+                    //mGridAdapter.updateView(mImageItems);
+                    mGridView.invalidateViews();
+                }
 
-                // Get the cursor
-                Cursor cursor = getContentResolver().query(selectedImage,
-                        filePathColumn, null, null, null);
-                // Move to first row
-                cursor.moveToFirst();
-
-                int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
-                imgDecodableString = cursor.getString(columnIndex);
-                cursor.close();
-                ImageView imgView = (ImageView) findViewById(R.id.imgView);
-                // Set the Image in ImageView after decoding the String
-                imgView.setImageBitmap(BitmapFactory
-                        .decodeFile(imgDecodableString));
-*/
-                Toast.makeText(this, "You picked Image",
-                        Toast.LENGTH_LONG).show();
             } else {
                 Toast.makeText(this, "You haven't picked Image",
                         Toast.LENGTH_LONG).show();

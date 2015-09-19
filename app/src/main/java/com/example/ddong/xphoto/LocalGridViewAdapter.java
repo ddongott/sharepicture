@@ -2,6 +2,7 @@ package com.example.ddong.xphoto;
 
 import android.app.Activity;
 import android.content.Context;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,9 +16,11 @@ import java.util.ArrayList;
  * Created by ddong on 2015-09-13.
  */
 public class LocalGridViewAdapter extends ArrayAdapter {
+    private final static String TAG = "GridView";
     private Context context;
     private int layoutResourceId;
     private ArrayList data = new ArrayList();
+    //private GridView mView = null;
 
     public LocalGridViewAdapter
             (Context context, int layoutResourceId, ArrayList data) {
@@ -31,7 +34,7 @@ public class LocalGridViewAdapter extends ArrayAdapter {
     public View getView(int position, View convertView, ViewGroup parent) {
         View row = convertView;
         ViewHolder holder = null;
-
+        Log.d(TAG, "getView");
         if (row == null) {
             LayoutInflater inflater = ((Activity) context).getLayoutInflater();
             row = inflater.inflate(layoutResourceId, parent, false);
@@ -43,16 +46,20 @@ public class LocalGridViewAdapter extends ArrayAdapter {
             holder = (ViewHolder) row.getTag();
         }
 
-        if(position == 0) {
-            holder.imageTitle.setText(R.string.add_photo);
-            holder.image.setImageResource(R.drawable.ic_add_black_48dp);
-        }
-        else {
-            ImageItem item = (ImageItem) data.get(position);
-            holder.imageTitle.setText(item.getTitle());
-            holder.image.setImageBitmap(item.getImage());
-        }
+
+        ImageItem item = (ImageItem) data.get(position);
+        holder.imageTitle.setText(item.getTitle());
+        holder.image.setImageBitmap(item.getImage());
+        //mView = row;
         return row;
+    }
+
+    public void updateView(ArrayList data) {
+        Log.d(TAG,"updateView: " + data.size());
+        this.data = data;
+        //if(mView != null) {
+        //    mView.invalidate();
+        //}
     }
 
     static class ViewHolder {
