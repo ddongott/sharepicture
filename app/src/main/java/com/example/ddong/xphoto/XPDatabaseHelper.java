@@ -14,7 +14,7 @@ public class XPDatabaseHelper extends SQLiteOpenHelper{
     private static final int DATABASE_VERSION = 2;
 
     // Database creation sql statement
-    private static final String DATABASE_CREATE = "create table " + LocalPhotoManager.TABLE_NAME +
+    private static final String DATABASE_CREATE = "create table " + LocalGalleryActivity.TABLE_NAME +
             "( _id integer primary key autoincrement," +
             "path text not null," +
             "thumbnail text not null);";

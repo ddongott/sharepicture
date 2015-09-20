@@ -30,7 +30,7 @@ public class PhotoDetailsActivity extends Activity {
  //       ImageView imageView = (ImageView) findViewById(R.id.image);
  //       Uri uri = Uri.parse(path);
  //       imageView.setImageURI(uri);
-        mDB = new XPDatabaseOperation(getApplicationContext(),LocalPhotoManager.TABLE_NAME);
+        mDB = new XPDatabaseOperation(getApplicationContext(), LocalGalleryActivity.TABLE_NAME);
 
         mAdapter = new FullScreenImageAdapter(PhotoDetailsActivity.this, getData());
 

@@ -3,6 +3,7 @@ package com.example.ddong.xphoto;
 import android.content.ClipData;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -28,17 +29,38 @@ import java.io.IOException;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 
-public class LocalPhotoManager extends AppCompatActivity {
+public class LocalGalleryActivity extends AppCompatActivity {
+    public static final String PREFS_NAME = "XPhotoSettings";
     public final static String TABLE_NAME = "ProtectPhotos";
-    private String TAG = "LocalPhotoManager";
+    private String TAG = "LocalGalleryActivity";
     private static int RESULT_LOAD_IMG = 1;
+    private static int RESULT_SET_PASSWORD = 2;
+    private static int RESULT_VALIDATE_PASSWORD = 3;
     private GridView mGridView;
     private LocalGridViewAdapter mGridAdapter;
     private XPDatabaseOperation mDB;
     final ArrayList<ImageItem> mImageItems = new ArrayList<>();
+    private SharedPreferences mSettings;
+    private String mPassword = "";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        mSettings = getSharedPreferences(PREFS_NAME, 0);
+        mPassword = mSettings.getString("password", "");
+        if(mPassword.isEmpty()) {
+            setLocalGalleryView();
+        } else {
+            //validate password first
+            Intent pwintent = new Intent(LocalGalleryActivity.this, SetPasswordActivity.class);
+            pwintent.putExtra("password",mPassword);
+            // Start the Intent
+            startActivityForResult(pwintent, RESULT_VALIDATE_PASSWORD);
+        }
+
+    }
+
+    private void setLocalGalleryView() {
         setContentView(R.layout.activity_photo_manager);
         mDB = new XPDatabaseOperation(getApplicationContext(),TABLE_NAME);
 
@@ -48,18 +70,21 @@ public class LocalPhotoManager extends AppCompatActivity {
         mGridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             public void onItemClick(AdapterView<?> parent, View v, int position, long id) {
                 if(position == 0) {
-                    // Create intent to Open Image applications like Gallery, Google Photos
-                    Intent galleryIntent = new Intent(Intent.ACTION_PICK,
-                            android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-                    galleryIntent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
-                    galleryIntent.putExtra(Intent.EXTRA_LOCAL_ONLY, true);
-                    // Start the Intent
-                    startActivityForResult(galleryIntent, RESULT_LOAD_IMG);
+                    if (mImageItems.size() == 1 && mPassword.isEmpty()) {
+                        //set password first
+                        Intent pwintent = new Intent(LocalGalleryActivity.this, SetPasswordActivity.class);
+                        pwintent.putExtra("password",mPassword);
+                        // Start the Intent
+                        startActivityForResult(pwintent, RESULT_SET_PASSWORD);
+                    }
+                    else {
+                        startGalleryIntent();
+                    }
                 }
                 else {
                     ImageItem item = (ImageItem) parent.getItemAtPosition(position);
                     //Create intent
-                    Intent intent = new Intent(LocalPhotoManager.this, PhotoDetailsActivity.class);
+                    Intent intent = new Intent(LocalGalleryActivity.this, PhotoDetailsActivity.class);
                     intent.putExtra("position", position);
                     //Start details activity
                     startActivity(intent);
@@ -68,6 +93,15 @@ public class LocalPhotoManager extends AppCompatActivity {
         });
     }
 
+    private void startGalleryIntent() {
+        // Create intent to Open Image applications like Gallery, Google Photos
+        Intent galleryIntent = new Intent(Intent.ACTION_PICK,
+                android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+        galleryIntent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+        galleryIntent.putExtra(Intent.EXTRA_LOCAL_ONLY, true);
+        // Start the Intent
+        startActivityForResult(galleryIntent, RESULT_LOAD_IMG);
+    }
     // Prepare some dummy data for gridview
     private ArrayList<ImageItem> getData() {
 
@@ -269,9 +303,31 @@ public class LocalPhotoManager extends AppCompatActivity {
                     mGridView.invalidateViews();
                 }
 
+            } else if (requestCode == RESULT_SET_PASSWORD) {
+                if (resultCode == RESULT_OK
+                    && null != data) {
+                    Bundle bundle = data.getExtras();
+                    mPassword = bundle.getString("password");
+                    SharedPreferences.Editor editor = mSettings.edit();
+                    editor.putString("password", mPassword);
+
+                    // Commit the edits!
+                    editor.commit();
+                    startGalleryIntent();
+                } else {
+                    Toast.makeText(this,getString(R.string.password_not_set),Toast.LENGTH_LONG)
+                            .show();
+                }
+            } else if (requestCode == RESULT_VALIDATE_PASSWORD) {
+                if (resultCode == RESULT_OK) {
+                    setLocalGalleryView();
+                }
+                else {
+                    finish();
+                }
             } else {
-                Toast.makeText(this, "You haven't picked Image",
-                        Toast.LENGTH_LONG).show();
+                    Toast.makeText(this, "Unexpected result",
+                            Toast.LENGTH_LONG).show();
             }
         } catch (Exception e) {
             Toast.makeText(this, "Something went wrong", Toast.LENGTH_LONG)

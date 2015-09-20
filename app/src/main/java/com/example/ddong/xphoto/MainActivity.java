@@ -39,13 +39,13 @@ public class MainActivity extends TabActivity
         Intent intent;
 
         /************setup tabs*********/
-        intent = new Intent().setClass(this, LocalPhotoManager.class);
+        intent = new Intent().setClass(this, LocalGalleryActivity.class);
         setupTab(intent, getString(R.string.tab_text_protected_photos), R.drawable.ic_photo_library_white_24dp);
 
         intent = new Intent().setClass(this, SharedPhotoManager.class);
         setupTab(intent, getString(R.string.tab_text_shared_photos), R.drawable.ic_share_black_24dp);
 
-        intent = new Intent().setClass(this, Contacts.class);
+        intent = new Intent().setClass(this, ContactsActivity.class);
         setupTab(intent, getString(R.string.tab_text_contacts), R.drawable.ic_people_black_24dp);
 
 

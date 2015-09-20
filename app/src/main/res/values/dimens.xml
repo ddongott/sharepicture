@@ -2,4 +2,8 @@
     <!-- Default screen margins, per the Android Design guidelines. -->
     <dimen name="activity_horizontal_margin">4dp</dimen>
     <dimen name="activity_vertical_margin">4dp</dimen>
+    <dimen name="password_display_width">64dp</dimen>
+    <dimen name="password_display_height">64dp</dimen>
+    <dimen name="keyboard_key_width">84dp</dimen>
+    <dimen name="keybaord_key_height">80dp</dimen>
 </resources>
