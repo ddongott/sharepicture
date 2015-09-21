@@ -23,25 +23,27 @@ import java.util.ArrayList;
  */
 public class FullScreenImageAdapter extends PagerAdapter {
     private final static String TAG = "FullScreenImageAdapter";
-    private Activity _activity;
-    private ArrayList<String> _imagePaths;
-    private LayoutInflater inflater;
+    private Activity mActivity;
+    private ArrayList<String> mImagePaths;
+    private LayoutInflater mInflater;
     private Point mScreenSize = new Point();
+    private EncriptionUtil mEncription;
 
     // constructor
     public FullScreenImageAdapter(Activity activity,
-                                  ArrayList<String> imagePaths) {
-        this._activity = activity;
-        this._imagePaths = imagePaths;
+                                  ArrayList<String> imagePaths, String password) {
+        this.mActivity = activity;
+        this.mImagePaths = imagePaths;
         Display display = activity.getWindowManager().getDefaultDisplay();
         display.getRealSize(mScreenSize);
         Log.d(TAG, "screen size: " + mScreenSize.x + ":" + mScreenSize.y);
+        mEncription = new EncriptionUtil(password);
 
     }
 
     @Override
     public int getCount() {
-        return this._imagePaths.size();
+        return this.mImagePaths.size();
     }
 
     @Override
@@ -54,22 +56,24 @@ public class FullScreenImageAdapter extends PagerAdapter {
         TouchImageView imgDisplay;
         Button btnClose;
 
-        inflater = (LayoutInflater) _activity
+        mInflater = (LayoutInflater) mActivity
                 .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        View viewLayout = inflater.inflate(R.layout.layout_fullscreen_image, container,
+        View viewLayout = mInflater.inflate(R.layout.layout_fullscreen_image, container,
                 false);
 
         imgDisplay = (TouchImageView) viewLayout.findViewById(R.id.imgDisplay);
         btnClose = (Button) viewLayout.findViewById(R.id.btnClose);
 
+        String path = mImagePaths.get(position);
+        byte[] imageData = mEncription.decriptFile(path);
         BitmapFactory.Options options = new BitmapFactory.Options();
         //calculate inSampleSize first
         options.inJustDecodeBounds = true;
-        Bitmap bitmap = BitmapFactory.decodeFile(_imagePaths.get(position), options);
+        Bitmap bitmap = BitmapFactory.decodeByteArray(imageData, 0, imageData.length, options);
         options.inSampleSize = calculateInSampleSize(options, mScreenSize.x, mScreenSize.y);
         options.inJustDecodeBounds = false;
 
-        bitmap = BitmapFactory.decodeFile(_imagePaths.get(position), options);
+        bitmap = BitmapFactory.decodeByteArray(imageData, 0, imageData.length, options);
 
         imgDisplay.setImageBitmap(bitmap);
 
@@ -77,7 +81,7 @@ public class FullScreenImageAdapter extends PagerAdapter {
         btnClose.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                _activity.finish();
+                mActivity.finish();
             }
         });
 

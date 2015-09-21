@@ -22,6 +22,7 @@ import android.widget.AdapterView;
 import android.widget.GridView;
 import android.widget.Toast;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -42,6 +43,7 @@ public class LocalGalleryActivity extends AppCompatActivity {
     final ArrayList<ImageItem> mImageItems = new ArrayList<>();
     private SharedPreferences mSettings;
     private String mPassword = "";
+    private EncriptionUtil mEncription = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -86,6 +88,7 @@ public class LocalGalleryActivity extends AppCompatActivity {
                     //Create intent
                     Intent intent = new Intent(LocalGalleryActivity.this, PhotoDetailsActivity.class);
                     intent.putExtra("position", position);
+                    intent.putExtra("password", mPassword);
                     //Start details activity
                     startActivity(intent);
                 }
@@ -116,8 +119,9 @@ public class LocalGalleryActivity extends AppCompatActivity {
                 int id = cursor.getInt(cursor.getColumnIndexOrThrow(XPDatabaseOperation.PHOTO_ID));
                 String thumbpath = cursor.getString(cursor.getColumnIndexOrThrow(XPDatabaseOperation.PHOTO_THUMB));
                 String path = cursor.getString(cursor.getColumnIndexOrThrow(XPDatabaseOperation.PHOTO_PATH));
-                Log.d(TAG,"thumbnail path: " + thumbpath);
-                Bitmap bitmap = BitmapFactory.decodeFile(thumbpath);
+                byte[] thumbdata = mEncription.decriptFile(path);
+                Log.d(TAG, "thumbnail path: " + thumbpath);
+                Bitmap bitmap = BitmapFactory.decodeByteArray(thumbdata, 0, thumbdata.length);
                 mImageItems.add(new ImageItem(bitmap, "Image#" + id, path));
                 cursor.moveToNext();
             }
@@ -195,9 +199,11 @@ public class LocalGalleryActivity extends AppCompatActivity {
     }
 
     private String getThumbnail(String picPath) {
+        int THUMBSIZE = 128;
         ExifInterface exif = null;
         Bitmap thumbnail;
-        int THUMBSIZE = 128;
+        byte[] imageData;
+        int    imageSize;
         try {
             exif = new ExifInterface(picPath);
         }
@@ -205,13 +211,17 @@ public class LocalGalleryActivity extends AppCompatActivity {
             Log.w(TAG, "No exif data for: " + picPath);
         }
 
-        if (exif != null) {
-            byte[] imageData = exif.getThumbnail();
+        if (exif != null && exif.hasThumbnail()) {
+            imageData = exif.getThumbnail();
+            imageSize = imageData.length;
             thumbnail = BitmapFactory.decodeByteArray(imageData, 0, imageData.length);
         }
         else {
             thumbnail = ThumbnailUtils.extractThumbnail(BitmapFactory.decodeFile(picPath), THUMBSIZE, THUMBSIZE);
-
+            ByteArrayOutputStream soutput = new ByteArrayOutputStream(thumbnail.getByteCount());
+            thumbnail.compress(Bitmap.CompressFormat.JPEG, 100, soutput);
+            imageData = soutput.toByteArray();
+            imageSize = soutput.size();
         }
         mImageItems.add(new ImageItem(thumbnail, "", picPath));
 
@@ -221,15 +231,8 @@ public class LocalGalleryActivity extends AppCompatActivity {
             thumbfolder.mkdirs();
         }
         File fThumb = new File(thumbfolder,thumbfilename);
-        FileOutputStream outputStream;
+        mEncription.encriptBytes(imageData, imageSize, fThumb);
 
-        try {
-            outputStream = new FileOutputStream (fThumb);
-            thumbnail.compress(Bitmap.CompressFormat.JPEG, 100, outputStream);
-            outputStream.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
         return fThumb.getPath();
     }
 
@@ -263,12 +266,7 @@ public class LocalGalleryActivity extends AppCompatActivity {
                 }
             }
             String dstpath = datafolder + "/" + filename;
-            try {
-                copyFile(path, dstpath);
-            } catch (IOException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }
+            mEncription.encriptFile(path, dstpath);
 
             String thumbnailpath = getThumbnail(path);
 
@@ -313,6 +311,7 @@ public class LocalGalleryActivity extends AppCompatActivity {
 
                     // Commit the edits!
                     editor.commit();
+                    mEncription = new EncriptionUtil(mPassword);
                     startGalleryIntent();
                 } else {
                     Toast.makeText(this,getString(R.string.password_not_set),Toast.LENGTH_LONG)
@@ -320,6 +319,7 @@ public class LocalGalleryActivity extends AppCompatActivity {
                 }
             } else if (requestCode == RESULT_VALIDATE_PASSWORD) {
                 if (resultCode == RESULT_OK) {
+                    mEncription = new EncriptionUtil(mPassword);
                     setLocalGalleryView();
                 }
                 else {

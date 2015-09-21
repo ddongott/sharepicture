@@ -23,6 +23,7 @@ public class PhotoDetailsActivity extends Activity {
         //utils = new Utils(getApplicationContext());
 
         int position = getIntent().getIntExtra("position", 1);
+        String password = getIntent().getStringExtra("password");
 
  //       TextView titleTextView = (TextView) findViewById(R.id.title);
  //       titleTextView.setText(title);
@@ -32,7 +33,7 @@ public class PhotoDetailsActivity extends Activity {
  //       imageView.setImageURI(uri);
         mDB = new XPDatabaseOperation(getApplicationContext(), LocalGalleryActivity.TABLE_NAME);
 
-        mAdapter = new FullScreenImageAdapter(PhotoDetailsActivity.this, getData());
+        mAdapter = new FullScreenImageAdapter(PhotoDetailsActivity.this, getData(), password);
 
         mViewPager.setAdapter(mAdapter);
 
