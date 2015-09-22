@@ -2,7 +2,6 @@ package com.example.ddong.xphoto;
 
 import android.app.Activity;
 import android.content.Context;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -34,7 +33,6 @@ public class LocalGridViewAdapter extends ArrayAdapter {
     public View getView(int position, View convertView, ViewGroup parent) {
         View row = convertView;
         ViewHolder holder = null;
-        Log.d(TAG, "getView");
         if (row == null) {
             LayoutInflater inflater = ((Activity) context).getLayoutInflater();
             row = inflater.inflate(layoutResourceId, parent, false);
@@ -55,7 +53,6 @@ public class LocalGridViewAdapter extends ArrayAdapter {
     }
 
     public void updateView(ArrayList data) {
-        Log.d(TAG,"updateView: " + data.size());
         this.data = data;
         //if(mView != null) {
         //    mView.invalidate();

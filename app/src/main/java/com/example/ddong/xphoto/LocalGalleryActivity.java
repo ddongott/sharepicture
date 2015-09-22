@@ -112,6 +112,7 @@ public class LocalGalleryActivity extends AppCompatActivity {
         Log.d(TAG, "getData");
         Bitmap bp = BitmapFactory.decodeResource(getResources(), R.drawable.ic_add_black_48dp);
         mImageItems.add(new ImageItem(bp, getString(R.string.add_photo), null));
+        byte[] thumbdata;
         try {
             cursor = mDB.selectRecords();
             int row = cursor.getCount();
@@ -119,8 +120,7 @@ public class LocalGalleryActivity extends AppCompatActivity {
                 int id = cursor.getInt(cursor.getColumnIndexOrThrow(XPDatabaseOperation.PHOTO_ID));
                 String thumbpath = cursor.getString(cursor.getColumnIndexOrThrow(XPDatabaseOperation.PHOTO_THUMB));
                 String path = cursor.getString(cursor.getColumnIndexOrThrow(XPDatabaseOperation.PHOTO_PATH));
-                byte[] thumbdata = mEncription.decriptFile(path);
-                Log.d(TAG, "thumbnail path: " + thumbpath);
+                thumbdata = mEncription.decriptFile(thumbpath);
                 Bitmap bitmap = BitmapFactory.decodeByteArray(thumbdata, 0, thumbdata.length);
                 mImageItems.add(new ImageItem(bitmap, "Image#" + id, path));
                 cursor.moveToNext();
@@ -215,6 +215,8 @@ public class LocalGalleryActivity extends AppCompatActivity {
             imageData = exif.getThumbnail();
             imageSize = imageData.length;
             thumbnail = BitmapFactory.decodeByteArray(imageData, 0, imageData.length);
+            Log.d(TAG,"Thumbnail size(" + imageData.length + "), resolution(" + thumbnail.getWidth() +
+            ":" + thumbnail.getHeight() + ")");
         }
         else {
             thumbnail = ThumbnailUtils.extractThumbnail(BitmapFactory.decodeFile(picPath), THUMBSIZE, THUMBSIZE);
