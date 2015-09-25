@@ -31,7 +31,6 @@ import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 
 public class LocalGalleryActivity extends AppCompatActivity {
-    public static final String PREFS_NAME = "XPhotoSettings";
     public final static String TABLE_NAME = "ProtectPhotos";
     private String TAG = "LocalGalleryActivity";
     private static int RESULT_LOAD_IMG = 1;
@@ -48,7 +47,7 @@ public class LocalGalleryActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mSettings = getSharedPreferences(PREFS_NAME, 0);
+        mSettings = getSharedPreferences(Helper.PREFS_NAME, 0);
         mPassword = mSettings.getString("password", "");
         if(mPassword.isEmpty()) {
             setLocalGalleryView();
@@ -149,11 +148,20 @@ public class LocalGalleryActivity extends AppCompatActivity {
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
+        if (id == R.id.action_accounts) {
+            launchAccountInfo();
+        }
+        else if (id == R.id.action_settings) {
             return true;
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    private void launchAccountInfo() {
+        Intent intent = new Intent(LocalGalleryActivity.this, AccountsInfoActivity.class);
+        // Start the Intent
+        startActivity(intent);
     }
 
     private void copyFile(String sourcePath, String destPath) throws IOException {

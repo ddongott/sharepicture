@@ -1,33 +1,29 @@
 package com.example.ddong.xphoto;
 
 import android.app.TabActivity;
-import android.content.Intent;
 import android.content.Context;
-import android.net.Uri;
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.Menu;
-import android.view.View;
-import android.view.MenuItem;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
 import android.widget.ImageView;
 import android.widget.TabHost;
 import android.widget.TabHost.OnTabChangeListener;
 import android.widget.TextView;
 
-import com.facebook.FacebookSdk;
-import com.facebook.appevents.AppEventsLogger;
+
 
 public class MainActivity extends TabActivity
-        implements LoginWithFacebook.OnFragmentInteractionListener
-        ,OnTabChangeListener {
+        implements OnTabChangeListener {
     /** Called when the activity is first created. */
     TabHost mTabHost;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        FacebookSdk.sdkInitialize(getApplicationContext());
 
         setContentView(R.layout.activity_main);
         // Get TabHost Refference
@@ -99,20 +95,12 @@ public class MainActivity extends TabActivity
     protected void onResume() {
         super.onResume();
 
-        // Logs 'install' and 'app activate' App Events.
-        AppEventsLogger.activateApp(this);
     }
 
     @Override
     protected void onPause() {
         super.onPause();
 
-        // Logs 'app deactivate' App Event.
-        AppEventsLogger.deactivateApp(this);
-    }
-    @Override
-    public void onFragmentInteraction(Uri uri) {
-        
     }
 
     @Override

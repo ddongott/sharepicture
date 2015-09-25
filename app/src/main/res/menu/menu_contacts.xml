@@ -4,4 +4,8 @@
     tools:context="com.example.ddong.xphoto.ContactsActivity">
     <item android:id="@+id/action_settings" android:title="@string/action_settings"
         android:orderInCategory="100" app:showAsAction="never" />
+    <item android:id="@+id/action_accounts"
+        android:icon="@drawable/ic_account_circle_white_24dp"
+        android:title="@string/action_accounts"
+        app:showAsAction="ifRoom"  />
 </menu>

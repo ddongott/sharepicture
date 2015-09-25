@@ -1,5 +1,6 @@
 package com.example.ddong.xphoto;
 
+import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.Menu;
@@ -28,10 +29,19 @@ public class ContactsActivity extends AppCompatActivity {
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
+        if (id == R.id.action_accounts) {
+            launchAccountInfo();
+        }
+        else if (id == R.id.action_settings) {
             return true;
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    private void launchAccountInfo() {
+        Intent intent = new Intent(ContactsActivity.this, AccountsInfoActivity.class);
+        // Start the Intent
+        startActivity(intent);
     }
 }

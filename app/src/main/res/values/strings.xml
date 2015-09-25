@@ -25,4 +25,10 @@
     <string name="password_not_set">Password not set</string>
     <string name="invalid_password">Invalid password, try again</string>
 
+    <string name="action_accounts">Account</string>
+    <string name="title_activity_account_info">AccountInfoActivity</string>
+    <string name="title_activity_accounts_info">AccountsInfoActivity</string>
+
+    <string name="user_info_no">Not sign in yet</string>
+
 </resources>

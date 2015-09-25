@@ -21,11 +21,3 @@ android:layout_height="fill_parent">
 </RelativeLayout>
 
 </TabHost>
-
-<!--
-<fragment android:name="com.example.ddong.xphoto.LoginWithFacebook"
-    android:id="@+id/list"
-    android:layout_weight="1"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent" />
--->
