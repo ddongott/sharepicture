@@ -6,4 +6,5 @@
     <dimen name="password_display_height">64dp</dimen>
     <dimen name="keyboard_key_width">84dp</dimen>
     <dimen name="keybaord_key_height">80dp</dimen>
+    <dimen name="contact_item_height">64dp</dimen>
 </resources>
