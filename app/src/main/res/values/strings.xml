@@ -31,4 +31,6 @@
 
     <string name="user_info_no">Not sign in yet</string>
 
+    <string name="fullscreen_btn_close">Close</string>
+    <string name="fullscreen_btn_share">Share</string>
 </resources>

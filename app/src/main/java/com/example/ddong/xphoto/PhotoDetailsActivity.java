@@ -1,7 +1,9 @@
 package com.example.ddong.xphoto;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.view.ViewPager;
 import android.util.Log;
@@ -10,6 +12,7 @@ import java.util.ArrayList;
 
 public class PhotoDetailsActivity extends Activity {
     private String TAG = "PhotoDetailsActivity";
+    public final static int PICK_CONTACT_REQUEST = 1001;
     private FullScreenImageAdapter mAdapter;
     private ViewPager mViewPager;
     private XPDatabaseOperation mDB;
@@ -62,5 +65,20 @@ public class PhotoDetailsActivity extends Activity {
             }
         }
         return mImagePath;
+    }
+
+    @Override
+    public void onActivityResult( int requestCode, int resultCode, Intent intent ) {
+
+        super.onActivityResult(requestCode, resultCode, intent);
+        if ( requestCode == PICK_CONTACT_REQUEST ) {
+
+            if ( resultCode == RESULT_OK ) {
+                Uri pickedEmail = intent.getData();
+                Log.d(TAG,"picked email: " + pickedEmail.toString());
+                mAdapter.onContactPickResult(requestCode, pickedEmail);
+                // handle the picked phone number in here.
+            }
+        }
     }
 }
