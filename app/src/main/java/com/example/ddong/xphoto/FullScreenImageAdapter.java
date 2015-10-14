@@ -121,12 +121,7 @@ public class FullScreenImageAdapter extends PagerAdapter {
         String email = cur.getString(
                 cur.getColumnIndex(ContactsContract.CommonDataKinds.Email.DATA));
         Log.d(TAG, "get email: " + email);
-        sendPhoto(email);
-    }
-
-    private void sendPhoto(String email){
-        String path = mImagePaths.get(mPosition);
-
+        HttpHelper.getInstance().sendPhoto(email, mImagePaths.get(mPosition));
     }
 
     @Override

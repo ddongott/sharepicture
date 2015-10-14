@@ -3,7 +3,6 @@ package com.example.ddong.xphoto;
 import android.content.ClipData;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -40,15 +39,13 @@ public class LocalGalleryActivity extends AppCompatActivity {
     private LocalGridViewAdapter mGridAdapter;
     private XPDatabaseOperation mDB;
     final ArrayList<ImageItem> mImageItems = new ArrayList<>();
-    private SharedPreferences mSettings;
     private String mPassword = "";
     private EncriptionUtil mEncription = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mSettings = getSharedPreferences(Helper.PREFS_NAME, 0);
-        mPassword = mSettings.getString("password", "");
+        mPassword = SharePrefHelper.getInstance().getPassword();
         if(mPassword.isEmpty()) {
             setLocalGalleryView();
         } else {
@@ -316,11 +313,8 @@ public class LocalGalleryActivity extends AppCompatActivity {
                     && null != data) {
                     Bundle bundle = data.getExtras();
                     mPassword = bundle.getString("password");
-                    SharedPreferences.Editor editor = mSettings.edit();
-                    editor.putString("password", mPassword);
+                    SharePrefHelper.getInstance().setPassword(mPassword);
 
-                    // Commit the edits!
-                    editor.commit();
                     mEncription = new EncriptionUtil(mPassword);
                     startGalleryIntent();
                 } else {

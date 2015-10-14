@@ -15,9 +15,9 @@ import android.widget.TabHost.OnTabChangeListener;
 import android.widget.TextView;
 
 
-
 public class MainActivity extends TabActivity
         implements OnTabChangeListener {
+    private final static String TAG = "MainActivity";
     /** Called when the activity is first created. */
     TabHost mTabHost;
 
@@ -26,6 +26,10 @@ public class MainActivity extends TabActivity
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_main);
+
+        SharePrefHelper.getInstance().setAppContext(getApplicationContext());
+        HttpHelper.getInstance().setAppContext(getApplicationContext());
+
         // Get TabHost Refference
         mTabHost = getTabHost();
 
@@ -33,7 +37,6 @@ public class MainActivity extends TabActivity
         mTabHost.setOnTabChangedListener(this);
 
         Intent intent;
-
         /************setup tabs*********/
         intent = new Intent().setClass(this, LocalGalleryActivity.class);
         setupTab(intent, getString(R.string.tab_text_protected_photos), R.drawable.ic_photo_library_white_24dp);
