@@ -27,8 +27,11 @@ public class MainActivity extends TabActivity
 
         setContentView(R.layout.activity_main);
 
-        SharePrefHelper.getInstance().setAppContext(getApplicationContext());
-        HttpHelper.getInstance().setAppContext(getApplicationContext());
+        Context appContext = getApplicationContext();
+        SharePrefHelper.getInstance().setAppContext(appContext);
+        HttpHelper.getInstance().setAppContext(appContext);
+        AccountManager.getInstance().setAppContext(appContext);
+        AccountManager.getInstance().login();
 
         // Get TabHost Refference
         mTabHost = getTabHost();
@@ -107,10 +110,16 @@ public class MainActivity extends TabActivity
     }
 
     @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        AccountManager.getInstance().release();
+    }
+
+    @Override
     public void onTabChanged(String tabId) {
         /************ Called when tab changed *************/
         int currtab = mTabHost.getCurrentTab();
-        Log.i("tabs", "CurrentTab: "+currtab);
+        Log.i("tabs", "CurrentTab: " + currtab);
 
         //********* Check current selected tab and change according images *******/
 
@@ -137,4 +146,5 @@ public class MainActivity extends TabActivity
             }
         }
     }
+    
 }

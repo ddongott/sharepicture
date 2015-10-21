@@ -4,9 +4,12 @@ import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
-import android.util.Base64;
+import android.text.TextUtils;
 import android.util.Log;
 
+import com.facebook.AccessToken;
+
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
@@ -17,12 +20,14 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.net.HttpCookie;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by ddong on 2015-09-29.
@@ -31,9 +36,12 @@ public class HttpHelper {
     private static final String TAG = "HttpHelper";
     private static final String URL_USERMANAGER = "http://192.168.0.111:8000/snippets/";
     private static final String URL_FACEBOOKSIGNUP = "http://192.168.0.111:8000/facebook-signup/";
-    private static final String URL_SHAREMANAGER = "http://10.106.238.200:8000/sharemanager/";
+    private static final String URL_SHAREMANAGER = "http://192.168.0.111:8000/sharemanager/";
     private static final HttpHelper instance = new HttpHelper();
     private Context mContext;
+    private AsyncTask<String, Void, Void> mPendingTask = null;
+    private static java.net.CookieManager msCookieManager = new java.net.CookieManager();
+    private String mCsrfToken = null;
 
     // Private constructor prevents instantiation from other classes
     private HttpHelper() { }
@@ -61,15 +69,27 @@ public class HttpHelper {
         }
     }
 
-    public void facebookLogin(JSONObject jsonObject) {
+    public void facebookLogin(AccessToken token) {
         ConnectivityManager connMgr = (ConnectivityManager)
                 mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
         Log.d(TAG, "postUserInfo. get networkInfo: " + networkInfo.toString());
 
         if (networkInfo != null && networkInfo.isConnected()) {
+            JSONObject object = new JSONObject();
+            try {
+                //object.put("uuid", mSharePrefHelper.getUserUUID());
+                //object.put("username","yaya");
+                //object.put("password","1234");
+                //object.put("facebookid", mSharePrefHelper.getFacebookId());
+                //object.put("emails", mSharePrefHelper.getEmails());
+                object.put("access_token",token.getToken());
+                Log.d(TAG, "Facebook token: " + token.getToken());
+            } catch (JSONException e) {
+                Log.d(TAG, "Exception when posting user info");
+            }
             Log.d(TAG, "Network connection available.");
-            HttpTaskParams params = new HttpTaskParams(URL_FACEBOOKSIGNUP, jsonObject);
+            HttpTaskParams params = new HttpTaskParams(URL_FACEBOOKSIGNUP, object);
             new PostJsonTask().execute(params);
         } else {
             Log.e(TAG, "No network connection available.");
@@ -93,8 +113,8 @@ public class HttpHelper {
             connection.setConnectTimeout(10000);
             connection.setReadTimeout(10000);
             connection.setRequestProperty("Content-Type", "application/json");
-            String basicAuth = "Basic " + new String(Base64.encode("ddong:njtu-579".getBytes(), Base64.NO_WRAP ));
-            connection.setRequestProperty ("Authorization", basicAuth);
+            //String basicAuth = "Basic " + new String(Base64.encode("ddong:njtu-579".getBytes(), Base64.NO_WRAP ));
+            //connection.setRequestProperty ("Authorization", basicAuth);
             //connection.setRequestProperty("Host", "192.168.0.111");
             Log.d(TAG, "sendJson: connectting: ... ");
 
@@ -106,26 +126,39 @@ public class HttpHelper {
             out.write(jsonObject.toString());
             out.close();
 
+
+
             int HttpResult = connection.getResponseCode();
             if(HttpResult == HttpURLConnection.HTTP_OK){
-                BufferedReader br = new BufferedReader(new InputStreamReader(
-                        connection.getInputStream(),"utf-8"));
-                String line = null;
-                while ((line = br.readLine()) != null) {
-                    sb.append(line + "\n");
+                Map<String, List<String>> headerFields = connection.getHeaderFields();
+                List<String> cookiesHeader = headerFields.get("Set-Cookie");
+
+                if(cookiesHeader != null)
+                {
+                    for (String cookie : cookiesHeader)
+                    {
+                        msCookieManager.getCookieStore().add(null, HttpCookie.parse(cookie).get(0));
+                    }
                 }
-                br.close();
-
-                System.out.println(""+sb.toString());
-
+                AccountManager.getInstance().setLoginStatus(true);
+                Log.d(TAG, cookiesHeader.toString());
             }else{
-                System.out.println(connection.getResponseMessage());
+                if(mPendingTask != null) {
+                    mPendingTask.cancel(true);
+                }
+                Log.d(TAG,connection.getResponseMessage());
             }
         }
         catch (MalformedURLException e) {
+            if(mPendingTask != null) {
+                mPendingTask.cancel(true);
+            }
             Log.d(TAG, "Exception: " + e.toString());
         }
         catch (IOException e) {
+            if(mPendingTask != null) {
+                mPendingTask.cancel(true);
+            }
             Log.d(TAG, "Exception: " + e.toString());
         }
         finally {
@@ -136,10 +169,28 @@ public class HttpHelper {
     }
 
     public void sendPhoto(String email, String path) {
+        AccountManager am = AccountManager.getInstance();
+        if(!am.getLoginStatus()) {
+            am.login();
+        }
         new SendPhotoTask().execute(email, path);
     }
 
     private class SendPhotoTask extends AsyncTask<String, Void, Void> {
+        @Override
+        protected void onPreExecute() {
+            mPendingTask = this;
+            //make sure login successfully
+            while (!AccountManager.getInstance().getLoginStatus()) {
+                try {
+                    Thread.sleep(500);
+                }
+                catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
         @Override
         protected Void doInBackground(String... params) {
             String email = params[0];
@@ -173,6 +224,12 @@ public class HttpHelper {
             }
 
             return null;
+        }
+
+        @Override
+        protected void onCancelled(Void result) {
+            Log.d(TAG, "onCancelled");
+            mPendingTask = null;
         }
     }
 
@@ -237,8 +294,30 @@ public class HttpHelper {
             httpConn.setDoOutput(true); // indicates POST method
             httpConn.setDoInput(true);
             httpConn.setRequestMethod("POST");
-            String basicAuth = "Basic " + new String(Base64.encode("ddong:njtu-579".getBytes(), Base64.NO_WRAP ));
-            httpConn.setRequestProperty("Authorization", basicAuth);
+            if(msCookieManager.getCookieStore().getCookies().size() > 0)
+            {
+                Log.d(TAG,"Add cookie for the connection: " + TextUtils.join(";", msCookieManager.getCookieStore().getCookies()));
+                //While joining the Cookies, use ',' or ';' as needed. Most of the server are using ';'
+                httpConn.setRequestProperty("Cookie",
+                        TextUtils.join(";", msCookieManager.getCookieStore().getCookies()));
+
+                HttpCookie csrfCookie = null;
+                for (HttpCookie cookie : msCookieManager.getCookieStore().getCookies()) {
+                    Log.d(TAG,"get cookie: " + cookie.getName());
+                    if (cookie.getName().equals("csrftoken")) {
+                        Log.d(TAG,"get csrftoken: ");
+                        csrfCookie = cookie;
+                        break;
+                    }
+                }
+
+                if(csrfCookie != null) {
+                    Log.d(TAG,"Add X-CSRFToken: " + csrfCookie.getValue());
+                    httpConn.setRequestProperty("X-CSRFToken", csrfCookie.getValue());
+                }
+            }
+            //String basicAuth = "Basic " + new String(Base64.encode("ddong:njtu-579".getBytes(), Base64.NO_WRAP ));
+            //httpConn.setRequestProperty("Authorization", AccountManager.getInstance().getAccessToken().toString());
             httpConn.setRequestProperty("Content-Type",
                     "multipart/form-data; boundary=" + boundary);
 

@@ -19,7 +19,6 @@ import com.facebook.login.LoginResult;
 import com.facebook.login.widget.LoginButton;
 import com.facebook.login.widget.ProfilePictureView;
 
-import org.json.JSONException;
 import org.json.JSONObject;
 
 public class AccountsInfoActivity extends AppCompatActivity {
@@ -52,8 +51,6 @@ public class AccountsInfoActivity extends AppCompatActivity {
             loginButton.setReadPermissions("user_friends");
             loginButton.setReadPermissions("email");
             //loginButton.setReadPermissions("read_custom_friendlists");
-
-
 
             loginButton.registerCallback(mCallbackManager, new FacebookCallback<LoginResult>() {
                 @Override
@@ -89,7 +86,7 @@ public class AccountsInfoActivity extends AppCompatActivity {
                                         Log.d(TAG, "new me request complete: " + jvalue);
 
                                         //write user info to server
-                                        postUserInfo(fbtoken);
+                                        HttpHelper.getInstance().facebookLogin(fbtoken);
                                     }
                                     catch (Exception e) {
                                         Log.d(TAG, "Exception when getting Facebook info");
@@ -122,22 +119,6 @@ public class AccountsInfoActivity extends AppCompatActivity {
         }
     }
 
-    public void postUserInfo(AccessToken token) {
-        JSONObject object = new JSONObject();
-        try {
-            //object.put("uuid", mSharePrefHelper.getUserUUID());
-            //object.put("username","yaya");
-            //object.put("password","1234");
-            //object.put("facebookid", mSharePrefHelper.getFacebookId());
-            //object.put("emails", mSharePrefHelper.getEmails());
-            object.put("access_token",token.getToken());
-            Log.d(TAG, "Facebook token: " + token.getToken());
-        } catch (JSONException e) {
-            Log.d(TAG, "Exception when posting user info");
-        }
-        Log.d(TAG, " send json: " + object.toString());
-        HttpHelper.getInstance().facebookLogin(object);
-    }
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
