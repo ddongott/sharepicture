@@ -1,9 +1,14 @@
 package com.example.ddong.xphoto;
 
 import android.app.TabActivity;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -14,10 +19,14 @@ import android.widget.TabHost;
 import android.widget.TabHost.OnTabChangeListener;
 import android.widget.TextView;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GoogleApiAvailability;
+
 
 public class MainActivity extends TabActivity
         implements OnTabChangeListener {
     private final static String TAG = "MainActivity";
+    private static final int PLAY_SERVICES_RESOLUTION_REQUEST = 9000;
     /** Called when the activity is first created. */
     TabHost mTabHost;
 
@@ -27,11 +36,18 @@ public class MainActivity extends TabActivity
 
         setContentView(R.layout.activity_main);
 
+        if (checkPlayServices()) {
+            // Start IntentService to register this application with GCM.
+            Intent intent = new Intent(this, RegistrationIntentService.class);
+            startService(intent);
+        }
+
         Context appContext = getApplicationContext();
         SharePrefHelper.getInstance().setAppContext(appContext);
         HttpHelper.getInstance().setAppContext(appContext);
         AccountManager.getInstance().setAppContext(appContext);
         AccountManager.getInstance().login();
+        Log.d(TAG, "gcm token: " + SharePrefHelper.getInstance().getGcmToken());
 
         // Get TabHost Refference
         mTabHost = getTabHost();
@@ -58,6 +74,27 @@ public class MainActivity extends TabActivity
         // Set Tab1 as Default tab and change image
         mTabHost.getTabWidget().setCurrentTab(0);
         //mTabHost.getTabWidget().getChildAt(0).setBackgroundResource(R.drawable.ic_photo_library_white_24dp);
+    }
+
+    /**
+     * Check the device to make sure it has the Google Play Services APK. If
+     * it doesn't, display a dialog that allows users to download the APK from
+     * the Google Play Store or enable it in the device's system settings.
+     */
+    private boolean checkPlayServices() {
+        GoogleApiAvailability apiAvailability = GoogleApiAvailability.getInstance();
+        int resultCode = apiAvailability.isGooglePlayServicesAvailable(this);
+        if (resultCode != ConnectionResult.SUCCESS) {
+            if (apiAvailability.isUserResolvableError(resultCode)) {
+                apiAvailability.getErrorDialog(this, resultCode, PLAY_SERVICES_RESOLUTION_REQUEST)
+                        .show();
+            } else {
+                Log.i(TAG, "This device is not supported.");
+                finish();
+            }
+            return false;
+        }
+        return true;
     }
 
     private void setupTab(final Intent intent, final String tag, final int imageres) {
@@ -100,7 +137,6 @@ public class MainActivity extends TabActivity
     @Override
     protected void onResume() {
         super.onResume();
-
     }
 
     @Override

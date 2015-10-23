@@ -34,9 +34,10 @@ import java.util.Map;
  */
 public class HttpHelper {
     private static final String TAG = "HttpHelper";
-    private static final String URL_USERMANAGER = "http://192.168.0.111:8000/snippets/";
-    private static final String URL_FACEBOOKSIGNUP = "http://192.168.0.111:8000/facebook-signup/";
-    private static final String URL_SHAREMANAGER = "http://192.168.0.111:8000/sharemanager/";
+    private static final String URL_SERVER = "http://10.133.30.142:8000/";
+    private static final String URL_USERMANAGER = URL_SERVER + "snippets/";
+    private static final String URL_FACEBOOKSIGNUP = URL_SERVER + "facebook-signup/";
+    private static final String URL_SHAREMANAGER = URL_SERVER + "sharemanager/";
     private static final HttpHelper instance = new HttpHelper();
     private Context mContext;
     private AsyncTask<String, Void, Void> mPendingTask = null;
@@ -205,9 +206,7 @@ public class HttpHelper {
             try {
                 MultipartUtility multipart = new MultipartUtility(URL_SHAREMANAGER, charset);
 
-                multipart.addFormField("datauuid", "de305d54-75b4-431b-adb2-eb6b9e546019");
-                multipart.addFormField("owneruuid", SharePrefHelper.getInstance().getUserUUID());
-                multipart.addFormField("sharetouuid", "de305d54-75b4-431b-adb2-eb6b9e546019");
+                multipart.addFormField("shareto", "UNKOWN");
                 multipart.addFormField("sharetoemail", email);
                 multipart.addFormField("expire", "1998-02-02T12:22:00Z");
                 multipart.addFilePart("data", uploadFile);

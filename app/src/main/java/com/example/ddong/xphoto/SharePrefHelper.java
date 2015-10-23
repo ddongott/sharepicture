@@ -15,6 +15,8 @@ public class SharePrefHelper {
     private static final String PREFS_KEY_USER_UUID = "useruuid";
     private static final String PREFS_KEY_PASSWORD = "password";
     private static final String PREFS_KEY_EMAILS = "emails";
+    private static final String GCM_TOKEN = "gcmToken";
+
 
     private Context mContext;
     private SharedPreferences mSettings;
@@ -91,5 +93,13 @@ public class SharePrefHelper {
 
         // Commit the edits!
         editor.commit();
+    }
+
+    public void setGcmToken(String token) {
+        mSettings.edit().putString(GCM_TOKEN, token).apply();
+    }
+
+    public String getGcmToken() {
+        return mSettings.getString(GCM_TOKEN, "");
     }
 }
