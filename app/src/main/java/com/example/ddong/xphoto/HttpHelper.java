@@ -34,7 +34,7 @@ import java.util.Map;
  */
 public class HttpHelper {
     private static final String TAG = "HttpHelper";
-    private static final String URL_SERVER = "http://10.133.30.142:8000/";
+    private static final String URL_SERVER = "http://10.133.30.31:8000/";
     private static final String URL_USERMANAGER = URL_SERVER + "snippets/";
     private static final String URL_FACEBOOKSIGNUP = URL_SERVER + "facebook-signup/";
     private static final String URL_SHAREMANAGER = URL_SERVER + "sharemanager/";
@@ -83,7 +83,8 @@ public class HttpHelper {
                 //object.put("username","yaya");
                 //object.put("password","1234");
                 //object.put("facebookid", mSharePrefHelper.getFacebookId());
-                //object.put("emails", mSharePrefHelper.getEmails());
+                object.put("gcm_token", SharePrefHelper.getInstance().getGcmToken());
+                Log.d(TAG, "gcm token: " + SharePrefHelper.getInstance().getGcmToken());
                 object.put("access_token",token.getToken());
                 Log.d(TAG, "Facebook token: " + token.getToken());
             } catch (JSONException e) {
