@@ -95,6 +95,10 @@
             android:exported="false">
         </service>
 
+        <service
+            android:name="com.example.ddong.xphoto.SharedPhotoIntentService"
+            android:exported="false">
+        </service>
     </application>
 
 </manifest>

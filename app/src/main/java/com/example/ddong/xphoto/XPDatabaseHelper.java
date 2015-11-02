@@ -12,20 +12,22 @@ public class XPDatabaseHelper extends SQLiteOpenHelper{
     private static final String DATABASE_NAME = "XP.db";
 
     private static final int DATABASE_VERSION = 2;
+    private final String mTable;
 
-    // Database creation sql statement
-    private static final String DATABASE_CREATE = "create table " + LocalGalleryActivity.TABLE_NAME +
-            "( _id integer primary key autoincrement," +
-            "path text not null," +
-            "thumbnail text not null);";
 
-    public XPDatabaseHelper(Context context) {
+    public XPDatabaseHelper(Context context, final String table) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
+        mTable = table;
     }
 
     // Method is called during creation of the database
     @Override
     public void onCreate(SQLiteDatabase database) {
+        final String DATABASE_CREATE = "create table " + mTable +
+                "( _id integer primary key autoincrement," +
+                "path text not null," +
+                "thumbnail text not null);";
+
         database.execSQL(DATABASE_CREATE);
     }
 

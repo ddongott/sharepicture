@@ -15,7 +15,9 @@ import org.json.JSONObject;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
@@ -35,7 +37,6 @@ import java.util.Map;
 public class HttpHelper {
     private static final String TAG = "HttpHelper";
     private static final String URL_SERVER = "http://10.133.30.31:8000/";
-    private static final String URL_USERMANAGER = URL_SERVER + "snippets/";
     private static final String URL_FACEBOOKSIGNUP = URL_SERVER + "facebook-signup/";
     private static final String URL_SHAREMANAGER = URL_SERVER + "sharemanager/";
     private static final HttpHelper instance = new HttpHelper();
@@ -53,21 +54,6 @@ public class HttpHelper {
 
     public void setAppContext(Context context) {
         mContext = context;
-    }
-
-    public void postUserInfo(JSONObject jsonObject) {
-        ConnectivityManager connMgr = (ConnectivityManager)
-                mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
-        Log.d(TAG, "postUserInfo. get networkInfo: " + networkInfo.toString());
-
-        if (networkInfo != null && networkInfo.isConnected()) {
-            Log.d(TAG, "Network connection available.");
-            HttpTaskParams params = new HttpTaskParams(URL_USERMANAGER, jsonObject);
-            new PostJsonTask().execute(params);
-        } else {
-            Log.e(TAG, "No network connection available.");
-        }
     }
 
     public void facebookLogin(AccessToken token) {
@@ -95,6 +81,31 @@ public class HttpHelper {
             new PostJsonTask().execute(params);
         } else {
             Log.e(TAG, "No network connection available.");
+        }
+    }
+
+    // Uses AsyncTask to create a task away from the main UI thread. This task takes a
+    // URL string and uses it to create an HttpUrlConnection. Once the connection
+    // has been established, the AsyncTask downloads the contents of the webpage as
+    // an InputStream. Finally, the InputStream is converted into a string, which is
+    // displayed in the UI by the AsyncTask's onPostExecute method.
+    private class PostJsonTask extends AsyncTask<HttpTaskParams, Void, Void> {
+        @Override
+        protected Void doInBackground(HttpTaskParams... params) {
+            // params comes from the execute() call: params[0] is the url.
+            Log.d(TAG, "PostJsonTask url: " + params[0].url);
+            sendJson(params[0].url, params[0].jobj);
+            return null;
+        }
+    }
+
+    private static class HttpTaskParams {
+        String url;
+        JSONObject jobj;
+
+        HttpTaskParams(String url, JSONObject obj) {
+            this.url = url;
+            this.jobj = obj;
         }
     }
 
@@ -233,30 +244,6 @@ public class HttpHelper {
         }
     }
 
-    // Uses AsyncTask to create a task away from the main UI thread. This task takes a
-    // URL string and uses it to create an HttpUrlConnection. Once the connection
-    // has been established, the AsyncTask downloads the contents of the webpage as
-    // an InputStream. Finally, the InputStream is converted into a string, which is
-    // displayed in the UI by the AsyncTask's onPostExecute method.
-    private class PostJsonTask extends AsyncTask<HttpTaskParams, Void, Void> {
-        @Override
-        protected Void doInBackground(HttpTaskParams... params) {
-            // params comes from the execute() call: params[0] is the url.
-            Log.d(TAG, "PostJsonTask url: " + params[0].url);
-            sendJson(params[0].url, params[0].jobj);
-            return null;
-        }
-    }
-
-    private static class HttpTaskParams {
-        String url;
-        JSONObject jobj;
-
-        HttpTaskParams(String url, JSONObject obj) {
-            this.url = url;
-            this.jobj = obj;
-        }
-    }
 
     /**
      * This utility class provides an abstraction layer for sending multipart HTTP
@@ -418,5 +405,185 @@ public class HttpHelper {
 
             return response;
         }
+    }
+
+    public void downloadMessage(String id, HttpDownloadCallback callback) {
+        Log.d(TAG,"downloadMessage: " + id);
+        AccountManager am = AccountManager.getInstance();
+        if(!am.getLoginStatus()) {
+            am.login();
+        }
+        String path = URL_SHAREMANAGER + id + "/";
+        new GetPhotoTask(callback).execute(path);
+    }
+
+    private class GetPhotoTask extends AsyncTask<String, Void, JSONObject> {
+        public HttpDownloadCallback mCallback = null;
+
+        public GetPhotoTask(HttpDownloadCallback callback) {
+            mCallback = callback;
+        }
+        @Override
+        protected void onPreExecute() {
+            //make sure login successfully
+            while (!AccountManager.getInstance().getLoginStatus()) {
+                try {
+                    Thread.sleep(500);
+                }
+                catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        @Override
+        protected JSONObject doInBackground(String... params) {
+            String request = params[0];
+
+            HttpURLConnection connection = null;
+            BufferedReader rd  = null;
+            StringBuilder sb = null;
+            String line = null;
+            //String otherParametersUrServiceNeed =  "Company=acompany&Lng=test&MainPeriod=test&UserID=123&CourseDate=8:10:10";
+            Log.d(TAG, "Get url: " + request);
+
+            try {
+                URL url = new URL(request);
+                connection = (HttpURLConnection) url.openConnection();
+                connection.setDoInput(true);
+                connection.setRequestMethod("GET");
+                connection.setUseCaches(false);
+                connection.setConnectTimeout(10000);
+                connection.setReadTimeout(10000);
+
+                if(msCookieManager.getCookieStore().getCookies().size() > 0)
+                {
+                    Log.d(TAG,"Add cookie for the connection: " + TextUtils.join(";", msCookieManager.getCookieStore().getCookies()));
+                    //While joining the Cookies, use ',' or ';' as needed. Most of the server are using ';'
+                    connection.setRequestProperty("Cookie",
+                            TextUtils.join(";", msCookieManager.getCookieStore().getCookies()));
+
+                    HttpCookie csrfCookie = null;
+                    for (HttpCookie cookie : msCookieManager.getCookieStore().getCookies()) {
+                        Log.d(TAG,"get cookie: " + cookie.getName());
+                        if (cookie.getName().equals("csrftoken")) {
+                            Log.d(TAG,"get csrftoken: ");
+                            csrfCookie = cookie;
+                            break;
+                        }
+                    }
+
+                    if(csrfCookie != null) {
+                        Log.d(TAG,"Add X-CSRFToken: " + csrfCookie.getValue());
+                        connection.setRequestProperty("X-CSRFToken", csrfCookie.getValue());
+                    }
+                }
+                Log.d(TAG, "GetPhotoTask: connectting: ... ");
+
+                connection.connect();
+                //connection.setRequestProperty("Content-Length", "" + Integer.toString(urlParameters.getBytes().length));
+                Log.d(TAG, "GetPhotoTask: connected: ");
+                int HttpResult = connection.getResponseCode();
+                if(HttpResult == HttpURLConnection.HTTP_OK) {
+                    rd = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+                    sb = new StringBuilder();
+
+                    while ((line = rd.readLine()) != null) {
+                        sb.append(line + '\n');
+                    }
+                    Log.d(TAG, sb.toString());
+                    JSONObject jobj = new JSONObject(sb.toString());
+                    return jobj;
+                }
+            }
+            catch (MalformedURLException e) {
+                Log.d(TAG, "Exception: " + e.toString());
+            }
+            catch (IOException e) {
+                Log.d(TAG, "Exception: " + e.toString());
+            }
+            catch (JSONException e) {
+                Log.d(TAG, "Exception: " + e.toString());
+            }
+
+            finally {
+                if (connection != null)
+                    connection.disconnect();
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(JSONObject result)
+        {
+            // Call activity method with results
+            mCallback.onTaskCompleted(result);
+        }
+
+	}
+
+    public void downloadData(String url) {
+        new DownloadTask().execute(url);
+    }
+
+    private class DownloadTask extends AsyncTask<String, Void, Void> {
+        @Override
+        protected Void doInBackground(String... params) {
+            String url = params[0];
+            // params comes from the execute() call: params[0] is the url.
+            Log.d(TAG, "PostJsonTask url: " + url);
+            try {
+                downloadFile(url);
+            }
+            catch (IOException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+    }
+
+    /**
+          * Downloads a file from a URL
+          * @param fileURL HTTP URL of the file to be downloaded
+          * @param saveDir path of the directory to save the file
+          * @throws IOException
+          */
+    private void downloadFile(String fileURL)
+            throws IOException {
+        URL url = new URL(fileURL);
+        HttpURLConnection httpConn = (HttpURLConnection) url.openConnection();
+        int responseCode = httpConn.getResponseCode();
+
+        // always check HTTP response code first
+        if (responseCode == HttpURLConnection.HTTP_OK) {
+            String fileName = fileURL.substring(fileURL.lastIndexOf("/") + 1,
+                    fileURL.length());
+            String contentType = httpConn.getContentType();
+            int contentLength = httpConn.getContentLength();
+
+            System.out.println("Content-Type = " + contentType);
+            System.out.println("Content-Length = " + contentLength);
+            System.out.println("fileName = " + fileName);
+
+            // opens input stream from the HTTP connection
+            InputStream inputStream = httpConn.getInputStream();
+            // opens an output stream to save into file
+            FileOutputStream outputStream = mContext.openFileOutput(fileName, Context.MODE_PRIVATE);
+            int bytesRead = -1;
+            byte[] buffer = new byte[4096];
+            while ((bytesRead = inputStream.read(buffer)) != -1) {
+                outputStream.write(buffer, 0, bytesRead);
+            }
+            outputStream.close();
+            inputStream.close();
+            System.out.println("File downloaded");
+        } else {
+            System.out.println("No file to download. Server replied HTTP code: " + responseCode);
+        }
+        httpConn.disconnect();
+    }
+
+    public interface HttpDownloadCallback {
+        public void onTaskCompleted(JSONObject results);
     }
 }

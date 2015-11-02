@@ -5,6 +5,11 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.util.Iterator;
+
 /**
  * Created by ddong on 2015-09-15.
  */
@@ -13,30 +18,33 @@ public class XPDatabaseOperation {
 
     private SQLiteDatabase database;
 
-    public final static String PHOTO_ID="_id"; // id
-    public final static String PHOTO_PATH="path";  // path of photo
-    public final static String PHOTO_THUMB="thumbnail";  // path of thumbnail
+
     private static String mTable;
     /**
      *
      * @param context
      */
     public XPDatabaseOperation(Context context, final String table){
-        dbHelper = new XPDatabaseHelper(context);
+        dbHelper = new XPDatabaseHelper(context, table);
         database = dbHelper.getWritableDatabase();
         mTable = table;
     }
 
-
-    public long createRecords(String path, String thumbnail){
+    public long createRecords(JSONObject jobj){
         ContentValues values = new ContentValues();
-        values.put(PHOTO_PATH, path);
-        values.put(PHOTO_THUMB, thumbnail);
-        return database.insert(mTable, null, values);
+        try {
+            for (Iterator<String> keys = jobj.keys(); keys.hasNext();) {
+                String key = keys.next();
+                values.put(key, jobj.getString(key));
+            }
+            return database.insert(mTable, null, values);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return 0;
     }
 
-    public Cursor selectRecords() {
-        String[] cols = new String[] {PHOTO_ID, PHOTO_PATH, PHOTO_THUMB};
+    public Cursor selectRecords(String[] cols) {
         Cursor mCursor = database.query(true, mTable,cols,null
                 , null, null, null, null, null);
         if (mCursor != null) {

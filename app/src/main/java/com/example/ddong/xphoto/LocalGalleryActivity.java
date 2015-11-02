@@ -1,5 +1,6 @@
 package com.example.ddong.xphoto;
 
+import android.app.FragmentManager;
 import android.content.ClipData;
 import android.content.Context;
 import android.content.Intent;
@@ -21,6 +22,9 @@ import android.widget.AdapterView;
 import android.widget.GridView;
 import android.widget.Toast;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -31,6 +35,10 @@ import java.util.ArrayList;
 
 public class LocalGalleryActivity extends AppCompatActivity {
     public final static String TABLE_NAME = "ProtectPhotos";
+    public final static String DB_KEY_PHOTO_ID="_id"; // id
+    public final static String DB_KEY_PHOTO_PATH="path";  // path of photo
+    public final static String DB_KEY_PHOTO_THUMB="thumbnail";  // path of thumbnail
+
     private String TAG = "LocalGalleryActivity";
     private static int RESULT_LOAD_IMG = 1;
     private static int RESULT_SET_PASSWORD = 2;
@@ -110,12 +118,13 @@ public class LocalGalleryActivity extends AppCompatActivity {
         mImageItems.add(new ImageItem(bp, getString(R.string.add_photo), null));
         byte[] thumbdata;
         try {
-            cursor = mDB.selectRecords();
+            String[] cols = new String[] {DB_KEY_PHOTO_ID, DB_KEY_PHOTO_PATH, DB_KEY_PHOTO_THUMB};
+            cursor = mDB.selectRecords(cols);
             int row = cursor.getCount();
             for(int i = 0; i < row; i++){
-                int id = cursor.getInt(cursor.getColumnIndexOrThrow(XPDatabaseOperation.PHOTO_ID));
-                String thumbpath = cursor.getString(cursor.getColumnIndexOrThrow(XPDatabaseOperation.PHOTO_THUMB));
-                String path = cursor.getString(cursor.getColumnIndexOrThrow(XPDatabaseOperation.PHOTO_PATH));
+                int id = cursor.getInt(cursor.getColumnIndexOrThrow(DB_KEY_PHOTO_ID));
+                String thumbpath = cursor.getString(cursor.getColumnIndexOrThrow(DB_KEY_PHOTO_THUMB));
+                String path = cursor.getString(cursor.getColumnIndexOrThrow(DB_KEY_PHOTO_PATH));
                 thumbdata = mEncription.decriptFile(thumbpath);
                 Bitmap bitmap = BitmapFactory.decodeByteArray(thumbdata, 0, thumbdata.length);
                 mImageItems.add(new ImageItem(bitmap, "Image#" + id, path));
@@ -277,7 +286,15 @@ public class LocalGalleryActivity extends AppCompatActivity {
 
             String thumbnailpath = getThumbnail(path);
 
-            mDB.createRecords(dstpath, thumbnailpath);
+            JSONObject object = new JSONObject();
+            try {
+                object.put(DB_KEY_PHOTO_PATH, dstpath);
+                object.put(DB_KEY_PHOTO_THUMB, thumbnailpath);
+                mDB.createRecords(object);
+            }
+            catch (JSONException e) {
+                e.printStackTrace();
+            }
         } finally {
             if (cursor != null) {
                 cursor.close();

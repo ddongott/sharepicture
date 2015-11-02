@@ -50,10 +50,11 @@ public class PhotoDetailsActivity extends Activity {
         Cursor cursor = null;
         Log.d(TAG, "getData");
         try {
-            cursor = mDB.selectRecords();
+            String[] cols = new String[] {LocalGalleryActivity.DB_KEY_PHOTO_ID, LocalGalleryActivity.DB_KEY_PHOTO_PATH, LocalGalleryActivity.DB_KEY_PHOTO_THUMB};
+            cursor = mDB.selectRecords(cols);
             int row = cursor.getCount();
             for(int i = 0; i < row; i++){
-                String path = cursor.getString(cursor.getColumnIndexOrThrow(XPDatabaseOperation.PHOTO_PATH));
+                String path = cursor.getString(cursor.getColumnIndexOrThrow(LocalGalleryActivity.DB_KEY_PHOTO_PATH));
                 Log.d(TAG,"path: " + path);
                 mImagePath.add(path);
                 cursor.moveToNext();
