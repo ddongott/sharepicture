@@ -7,6 +7,9 @@ import com.facebook.AccessToken;
 import com.facebook.AccessTokenTracker;
 import com.facebook.FacebookSdk;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 /**
  * Created by ddong on 2015-10-14.
  */
@@ -52,6 +55,7 @@ public class AccountManager {
                 // Set the access token using
                 // currentAccessToken when it's loaded or set.
                 mAccessToken = currentAccessToken;
+                HttpHelper.getInstance().facebookLogin(mAccessToken);
             }
         };
 
@@ -76,8 +80,27 @@ public class AccountManager {
         }
     }
 
-    public void setLoginStatus(boolean login) {
-        mLogin = login;
+    public void loginSuccess(JSONObject jobj) {
+        SharePrefHelper sharepreference = SharePrefHelper.getInstance();
+        try {
+            mLogin = jobj.getBoolean("success");
+            if(mLogin) {
+                String username = jobj.getString("username");
+                sharepreference.setUserName(username);
+                String email = jobj.getString("email");
+                sharepreference.setEmail(email);
+                String first_name = jobj.getString("first_name");
+                sharepreference.setFirstName(first_name);
+                String last_name = jobj.getString("last_name");
+                sharepreference.setLastName(last_name);
+                String user_id = jobj.getString("user_id");
+                sharepreference.setUserID(user_id);
+                HttpHelper.getInstance().updateGCMToken(sharepreference.getGcmToken());
+            }
+        }
+        catch (JSONException e) {
+            Log.d(TAG,e.toString());
+        }
     }
 
     public boolean getLoginStatus() {

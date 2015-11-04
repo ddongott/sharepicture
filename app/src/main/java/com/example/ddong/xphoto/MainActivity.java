@@ -43,11 +43,7 @@ public class MainActivity extends TabActivity
         }
 
         Context appContext = getApplicationContext();
-        SharePrefHelper.getInstance().setAppContext(appContext);
-        HttpHelper.getInstance().setAppContext(appContext);
-        AccountManager.getInstance().setAppContext(appContext);
-        AccountManager.getInstance().login();
-        Log.d(TAG, "gcm token: " + SharePrefHelper.getInstance().getGcmToken());
+        XPUtils.Init(appContext);
 
         // Get TabHost Refference
         mTabHost = getTabHost();

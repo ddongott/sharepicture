@@ -76,15 +76,6 @@ public class AccountsInfoActivity extends AppCompatActivity {
                                         mFbAvatar.setProfileId(jvalue);
                                         Log.d(TAG, "new me request complete: " + jvalue);
 
-                                        jvalue = (String) object.getString("name");
-                                        mSharePrefHelper.setUserName(jvalue);
-                                        mAccoutName.setText(jvalue);
-                                        Log.d(TAG, "new me request complete: " + jvalue);
-
-                                        jvalue = (String) object.getString("email");
-                                        mSharePrefHelper.setEmail(jvalue);
-                                        Log.d(TAG, "new me request complete: " + jvalue);
-
                                         //write user info to server
                                         HttpHelper.getInstance().facebookLogin(fbtoken);
                                     }

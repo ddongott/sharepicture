@@ -39,6 +39,7 @@ public class HttpHelper {
     private static final String URL_SERVER = "http://10.133.30.31:8000/";
     private static final String URL_FACEBOOKSIGNUP = URL_SERVER + "facebook-signup/";
     private static final String URL_SHAREMANAGER = URL_SERVER + "sharemanager/";
+    private static final String URL_USER = URL_SERVER + "users/";
     private static final HttpHelper instance = new HttpHelper();
     private Context mContext;
     private AsyncTask<String, Void, Void> mPendingTask = null;
@@ -76,11 +77,48 @@ public class HttpHelper {
             } catch (JSONException e) {
                 Log.d(TAG, "Exception when posting user info");
             }
+
+            HttpTaskCallback callback = new HttpTaskCallback() {
+                @Override
+                public void onTaskCompleted(JSONObject results) {
+                    AccountManager.getInstance().loginSuccess(results);
+                }
+            };
+
             Log.d(TAG, "Network connection available.");
-            HttpTaskParams params = new HttpTaskParams(URL_FACEBOOKSIGNUP, object);
-            new PostJsonTask().execute(params);
+            HttpTaskParams params = new HttpTaskParams("POST", URL_FACEBOOKSIGNUP, object);
+            new PostJsonTask(callback).execute(params);
         } else {
             Log.e(TAG, "No network connection available.");
+        }
+    }
+
+    public void updateGCMToken(String gcmtoken) {
+        ConnectivityManager connMgr = (ConnectivityManager)
+                mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
+        Log.d(TAG, "updateGCMToken. get networkInfo: " + networkInfo.toString());
+
+        if (networkInfo != null && networkInfo.isConnected()) {
+            JSONObject object = new JSONObject();
+            SharePrefHelper sharepreference = SharePrefHelper.getInstance();
+
+            try {
+                //object.put("username", sharepreference.getUserName());
+                //object.put("first_name",sharepreference.getFirstName());
+                //object.put("last_name",sharepreference.getLastName());
+                //object.put("email", sharepreference.getEmails());
+                object.put("gcm_token", gcmtoken);
+                String user_id = sharepreference.getUserID();
+                String url = URL_USER + user_id + "/";
+                Log.d(TAG, "updateGCMToken gcm token: " + gcmtoken);
+                HttpTaskParams params = new HttpTaskParams("PATCH", url, object);
+                new PostJsonTask(null).execute(params);
+            } catch (JSONException e) {
+                Log.d(TAG, "Exception when posting user info");
+            }
+        } else {
+            Log.e(TAG, "updateGCMToken No network connection available.");
         }
     }
 
@@ -89,27 +127,43 @@ public class HttpHelper {
     // has been established, the AsyncTask downloads the contents of the webpage as
     // an InputStream. Finally, the InputStream is converted into a string, which is
     // displayed in the UI by the AsyncTask's onPostExecute method.
-    private class PostJsonTask extends AsyncTask<HttpTaskParams, Void, Void> {
+    private class PostJsonTask extends AsyncTask<HttpTaskParams, Void, JSONObject> {
+        public HttpTaskCallback mCallback = null;
+
+        public PostJsonTask(HttpTaskCallback callback) {
+            mCallback = callback;
+        }
+
         @Override
-        protected Void doInBackground(HttpTaskParams... params) {
+        protected JSONObject doInBackground(HttpTaskParams... params) {
             // params comes from the execute() call: params[0] is the url.
             Log.d(TAG, "PostJsonTask url: " + params[0].url);
-            sendJson(params[0].url, params[0].jobj);
-            return null;
+            return sendJson(params[0].method, params[0].url, params[0].jobj);
+        }
+
+        @Override
+        protected void onPostExecute(JSONObject result)
+        {
+            // Call activity method with results
+            if (mCallback != null) {
+                mCallback.onTaskCompleted(result);
+            }
         }
     }
 
     private static class HttpTaskParams {
+        String method;
         String url;
         JSONObject jobj;
 
-        HttpTaskParams(String url, JSONObject obj) {
+        HttpTaskParams(String method, String url, JSONObject obj) {
+            this.method = method;
             this.url = url;
             this.jobj = obj;
         }
     }
 
-    public void sendJson(String request, JSONObject jsonObject) {
+    public JSONObject sendJson(String method, String request, JSONObject jsonObject) {
         HttpURLConnection connection = null;
         StringBuilder sb = new StringBuilder();
         //String otherParametersUrServiceNeed =  "Company=acompany&Lng=test&MainPeriod=test&UserID=123&CourseDate=8:10:10";
@@ -119,7 +173,7 @@ public class HttpHelper {
             URL url = new URL(request);
             connection = (HttpURLConnection) url.openConnection();
             connection.setDoOutput(true);
-            connection.setRequestMethod("POST");
+            connection.setRequestMethod(method);
             connection.setUseCaches(false);
             Log.d(TAG, "sendJson: length: " + jsonObject.toString().length());
             connection.setFixedLengthStreamingMode(jsonObject.toString().length());
@@ -129,6 +183,29 @@ public class HttpHelper {
             //String basicAuth = "Basic " + new String(Base64.encode("ddong:njtu-579".getBytes(), Base64.NO_WRAP ));
             //connection.setRequestProperty ("Authorization", basicAuth);
             //connection.setRequestProperty("Host", "192.168.0.111");
+            if(msCookieManager.getCookieStore().getCookies().size() > 0)
+            {
+                Log.d(TAG,"Add cookie for the connection: " + TextUtils.join(";", msCookieManager.getCookieStore().getCookies()));
+                //While joining the Cookies, use ',' or ';' as needed. Most of the server are using ';'
+                connection.setRequestProperty("Cookie",
+                        TextUtils.join(";", msCookieManager.getCookieStore().getCookies()));
+
+                HttpCookie csrfCookie = null;
+                for (HttpCookie cookie : msCookieManager.getCookieStore().getCookies()) {
+                    Log.d(TAG,"get cookie: " + cookie.getName());
+                    if (cookie.getName().equals("csrftoken")) {
+                        Log.d(TAG,"get csrftoken: ");
+                        csrfCookie = cookie;
+                        break;
+                    }
+                }
+
+                if(csrfCookie != null) {
+                    Log.d(TAG,"Add X-CSRFToken: " + csrfCookie.getValue());
+                    connection.setRequestProperty("X-CSRFToken", csrfCookie.getValue());
+                }
+            }
+
             Log.d(TAG, "sendJson: connectting: ... ");
 
             connection.connect();
@@ -138,8 +215,6 @@ public class HttpHelper {
             OutputStreamWriter out = new OutputStreamWriter(connection.getOutputStream());
             out.write(jsonObject.toString());
             out.close();
-
-
 
             int HttpResult = connection.getResponseCode();
             if(HttpResult == HttpURLConnection.HTTP_OK){
@@ -152,9 +227,21 @@ public class HttpHelper {
                     {
                         msCookieManager.getCookieStore().add(null, HttpCookie.parse(cookie).get(0));
                     }
+                    Log.d(TAG, cookiesHeader.toString());
                 }
-                AccountManager.getInstance().setLoginStatus(true);
-                Log.d(TAG, cookiesHeader.toString());
+
+                //read response
+                BufferedReader rd = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+                sb = new StringBuilder();
+                String line;
+
+                while ((line = rd.readLine()) != null) {
+                    sb.append(line + '\n');
+                }
+                Log.d(TAG, sb.toString());
+                JSONObject jobj = new JSONObject(sb.toString());
+
+                return jobj;
             }else{
                 if(mPendingTask != null) {
                     mPendingTask.cancel(true);
@@ -174,11 +261,17 @@ public class HttpHelper {
             }
             Log.d(TAG, "Exception: " + e.toString());
         }
+        catch (JSONException e) {
+            if(mPendingTask != null) {
+                mPendingTask.cancel(true);
+            }
+            Log.d(TAG, "Exception: " + e.toString());
+        }
         finally {
             if (connection != null)
                 connection.disconnect();
         }
-
+        return null;
     }
 
     public void sendPhoto(String email, String path) {
@@ -407,7 +500,7 @@ public class HttpHelper {
         }
     }
 
-    public void downloadMessage(String id, HttpDownloadCallback callback) {
+    public void downloadMessage(String id, HttpTaskCallback callback) {
         Log.d(TAG,"downloadMessage: " + id);
         AccountManager am = AccountManager.getInstance();
         if(!am.getLoginStatus()) {
@@ -418,9 +511,9 @@ public class HttpHelper {
     }
 
     private class GetPhotoTask extends AsyncTask<String, Void, JSONObject> {
-        public HttpDownloadCallback mCallback = null;
+        public HttpTaskCallback mCallback = null;
 
-        public GetPhotoTask(HttpDownloadCallback callback) {
+        public GetPhotoTask(HttpTaskCallback callback) {
             mCallback = callback;
         }
         @Override
@@ -517,7 +610,9 @@ public class HttpHelper {
         protected void onPostExecute(JSONObject result)
         {
             // Call activity method with results
-            mCallback.onTaskCompleted(result);
+            if (mCallback != null) {
+                mCallback.onTaskCompleted(result);
+            }
         }
 
 	}
@@ -583,7 +678,7 @@ public class HttpHelper {
         httpConn.disconnect();
     }
 
-    public interface HttpDownloadCallback {
+    public interface HttpTaskCallback {
         public void onTaskCompleted(JSONObject results);
     }
 }

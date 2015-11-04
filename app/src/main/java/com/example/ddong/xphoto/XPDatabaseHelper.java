@@ -23,12 +23,19 @@ public class XPDatabaseHelper extends SQLiteOpenHelper{
     // Method is called during creation of the database
     @Override
     public void onCreate(SQLiteDatabase database) {
-        final String DATABASE_CREATE = "create table " + mTable +
+        final String CREATE_LOCAL_TABLE = "create table " + LocalGalleryActivity.TABLE_NAME +
                 "( _id integer primary key autoincrement," +
                 "path text not null," +
                 "thumbnail text not null);";
 
-        database.execSQL(DATABASE_CREATE);
+        final String CREATE_SHARE_TABLE = "create table " + SharedPhotoManager.TABLE_NAME +
+                "( _id integer primary key autoincrement," +
+                "serverid text not null," +
+                "owner text not null," +
+                "data text not null);";
+
+        database.execSQL(CREATE_LOCAL_TABLE);
+        database.execSQL(CREATE_SHARE_TABLE);
     }
 
     // Method is called during an upgrade of the database,
@@ -37,7 +44,7 @@ public class XPDatabaseHelper extends SQLiteOpenHelper{
         Log.w(XPDatabaseHelper.class.getName(),
                 "Upgrading database from version " + oldVersion + " to "
                         + newVersion + ", which will destroy all old data");
-        database.execSQL("DROP TABLE IF EXISTS MyEmployees");
+        database.execSQL("DROP TABLE IF EXISTS");
         onCreate(database);
     }
 }

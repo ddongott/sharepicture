@@ -33,4 +33,6 @@
 
     <string name="fullscreen_btn_close">Close</string>
     <string name="fullscreen_btn_share">Share</string>
+
+    <string name="gcm_notification">send you a secured photo</string>
 </resources>

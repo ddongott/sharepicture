@@ -3,8 +3,6 @@ package com.example.ddong.xphoto;
 import android.content.Context;
 import android.content.SharedPreferences;
 
-import java.util.UUID;
-
 /**
  * Created by ddong on 2015-09-22.
  */
@@ -12,7 +10,9 @@ public class SharePrefHelper {
     private static final String PREFS_NAME = "XPhotoSettings";
     private static final String PREFS_KEY_FACEBOOK_ID = "fbid";
     private static final String PREFS_KEY_USERNAME = "username";
-    private static final String PREFS_KEY_USER_UUID = "useruuid";
+    private static final String PREFS_KEY_FIRSTNAME = "first_name";
+    private static final String PREFS_KEY_LASTNAME = "last_name";
+    private static final String PREFS_KEY_USER_ID = "userid";
     private static final String PREFS_KEY_PASSWORD = "password";
     private static final String PREFS_KEY_EMAILS = "emails";
     private static final String GCM_TOKEN = "gcmToken";
@@ -70,19 +70,6 @@ public class SharePrefHelper {
         return mSettings.getString(PREFS_KEY_EMAILS, "");
     }
 
-    public String getUserUUID() {
-        String uuid = mSettings.getString(PREFS_KEY_USER_UUID, "");
-        //if uuid of the user is not generated,
-        //get a new one.
-        if (uuid.isEmpty()) {
-            uuid = UUID.randomUUID().toString();
-            SharedPreferences.Editor editor = mSettings.edit();
-            editor.putString(PREFS_KEY_USER_UUID, uuid);
-            editor.commit();
-        }
-        return uuid;
-    }
-
     public String getPassword() {
         return mSettings.getString(PREFS_KEY_PASSWORD, "");
     }
@@ -101,5 +88,29 @@ public class SharePrefHelper {
 
     public String getGcmToken() {
         return mSettings.getString(GCM_TOKEN, "");
+    }
+
+    public void setUserID(String user_id) {
+        mSettings.edit().putString(PREFS_KEY_USER_ID, user_id).apply();
+    }
+
+    public String getUserID() {
+        return mSettings.getString(PREFS_KEY_USER_ID, "");
+    }
+
+    public void setFirstName(String first_name) {
+        mSettings.edit().putString(PREFS_KEY_FIRSTNAME, first_name).apply();
+    }
+
+    public String getFirstName() {
+        return mSettings.getString(PREFS_KEY_FIRSTNAME, "");
+    }
+
+    public void setLastName(String last_name) {
+        mSettings.edit().putString(PREFS_KEY_LASTNAME, last_name).apply();
+    }
+
+    public String getLastName() {
+        return mSettings.getString(PREFS_KEY_LASTNAME, "");
     }
 }

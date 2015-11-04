@@ -52,6 +52,9 @@ public class RegistrationIntentService extends IntentService {
                     GoogleCloudMessaging.INSTANCE_ID_SCOPE, null);
             // [END get_token]
             Log.i(TAG, "GCM Registration Token: " + token);
+            if(AccountManager.getInstance().getLoginStatus()) {
+                HttpHelper.getInstance().updateGCMToken(token);
+            }
 
             // Subscribe to topic channels
             subscribeTopics(token);
