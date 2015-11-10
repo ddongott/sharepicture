@@ -7,4 +7,12 @@
     <dimen name="keyboard_key_width">84dp</dimen>
     <dimen name="keybaord_key_height">80dp</dimen>
     <dimen name="contact_item_height">64dp</dimen>
+
+    <!-- values for received_photo_item_layout. -->
+    <dimen name="received_thumb_width">64dp</dimen>
+    <dimen name="received_thumb_height">64dp</dimen>
+    <dimen name="half_received_thumb_height">32dp</dimen>
+    <dimen name="txt_title_width">64dp</dimen>
+
+
 </resources>

@@ -34,7 +34,6 @@ import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 
 public class LocalGalleryActivity extends AppCompatActivity {
-    public final static String TABLE_NAME = "ProtectPhotos";
     public final static String DB_KEY_PHOTO_ID="_id"; // id
     public final static String DB_KEY_PHOTO_PATH="path";  // path of photo
     public final static String DB_KEY_PHOTO_THUMB="thumbnail";  // path of thumbnail
@@ -68,7 +67,7 @@ public class LocalGalleryActivity extends AppCompatActivity {
 
     private void setLocalGalleryView() {
         setContentView(R.layout.activity_photo_manager);
-        mDB = new XPDatabaseOperation(getApplicationContext(),TABLE_NAME);
+        mDB = new XPDatabaseOperation(getApplicationContext(),XPDatabaseHelper.LOCAL_TABLE_NAME);
 
         mGridView = (GridView) findViewById(R.id.gridView);
         mGridAdapter = new LocalGridViewAdapter(this, R.layout.grid_item_layout, getData());
@@ -115,7 +114,7 @@ public class LocalGalleryActivity extends AppCompatActivity {
         Cursor cursor = null;
         Log.d(TAG, "getData");
         Bitmap bp = BitmapFactory.decodeResource(getResources(), R.drawable.ic_add_black_48dp);
-        mImageItems.add(new ImageItem(bp, getString(R.string.add_photo), null));
+        mImageItems.add(new ImageItem(bp, null, 0));
         byte[] thumbdata;
         try {
             String[] cols = new String[] {DB_KEY_PHOTO_ID, DB_KEY_PHOTO_PATH, DB_KEY_PHOTO_THUMB};
@@ -127,7 +126,7 @@ public class LocalGalleryActivity extends AppCompatActivity {
                 String path = cursor.getString(cursor.getColumnIndexOrThrow(DB_KEY_PHOTO_PATH));
                 thumbdata = mEncription.decriptFile(thumbpath);
                 Bitmap bitmap = BitmapFactory.decodeByteArray(thumbdata, 0, thumbdata.length);
-                mImageItems.add(new ImageItem(bitmap, "Image#" + id, path));
+                mImageItems.add(new ImageItem(bitmap, path, 0));
                 cursor.moveToNext();
             }
         }
@@ -239,7 +238,7 @@ public class LocalGalleryActivity extends AppCompatActivity {
             imageData = soutput.toByteArray();
             imageSize = soutput.size();
         }
-        mImageItems.add(new ImageItem(thumbnail, "", picPath));
+        mImageItems.add(new ImageItem(thumbnail, picPath, 0));
 
         String thumbfilename = picPath.substring(picPath.lastIndexOf("/") + 1);
         File thumbfolder = Environment.getExternalStoragePublicDirectory(getString(R.string.data_storage_folder) + "/.thumbnail");

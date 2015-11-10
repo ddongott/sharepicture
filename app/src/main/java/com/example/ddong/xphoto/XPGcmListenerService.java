@@ -16,14 +16,8 @@
 
 package com.example.ddong.xphoto;
 
-import android.app.NotificationManager;
-import android.app.PendingIntent;
-import android.content.Context;
 import android.content.Intent;
-import android.media.RingtoneManager;
-import android.net.Uri;
 import android.os.Bundle;
-import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
 import com.google.android.gms.gcm.GcmListenerService;
@@ -59,7 +53,7 @@ public class XPGcmListenerService extends GcmListenerService {
          *     - Store message in local database.
          *     - Update UI.
          */
-        Intent intent = new Intent(this, SharedPhotoIntentService.class);
+        Intent intent = new Intent(this, ReceivedPhotoIntentService.class);
         intent.putExtra("message", message);
         startService(intent);
         /**

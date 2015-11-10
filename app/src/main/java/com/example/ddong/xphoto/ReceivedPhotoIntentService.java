@@ -17,11 +17,11 @@ import org.json.JSONObject;
 /**
  * Created by ddong on 30/10/15.
  */
-public class SharedPhotoIntentService extends IntentService {
+public class ReceivedPhotoIntentService extends IntentService {
     private static final String TAG = "SPIntentService";
     private static final String[] TOPICS = {"global"};
 
-    public SharedPhotoIntentService() {
+    public ReceivedPhotoIntentService() {
         super(TAG);
     }
 
@@ -30,7 +30,7 @@ public class SharedPhotoIntentService extends IntentService {
         String msg = intent.getStringExtra("message");
         Context appContext = getApplicationContext();
         XPUtils.Init(appContext);
-        final XPDatabaseOperation hDb = new XPDatabaseOperation(appContext,SharedPhotoManager.TABLE_NAME);
+        final XPDatabaseOperation hDb = new XPDatabaseOperation(appContext, XPDatabaseHelper.RECEIVED_TABLE_NAME);
         HttpHelper.HttpTaskCallback callback = new HttpHelper.HttpTaskCallback() {
             @Override
             public void onTaskCompleted(JSONObject results) {

@@ -1,14 +1,9 @@
 package com.example.ddong.xphoto;
 
 import android.app.TabActivity;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
-import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
-import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -56,7 +51,7 @@ public class MainActivity extends TabActivity
         intent = new Intent().setClass(this, LocalGalleryActivity.class);
         setupTab(intent, getString(R.string.tab_text_protected_photos), R.drawable.ic_photo_library_white_24dp);
 
-        intent = new Intent().setClass(this, SharedPhotoManager.class);
+        intent = new Intent().setClass(this, ReceivedPhotoActivity.class);
         setupTab(intent, getString(R.string.tab_text_shared_photos), R.drawable.ic_share_black_24dp);
 
         intent = new Intent().setClass(this, ContactsActivity.class);

@@ -36,7 +36,7 @@ import java.util.Map;
  */
 public class HttpHelper {
     private static final String TAG = "HttpHelper";
-    private static final String URL_SERVER = "http://10.133.30.31:8000/";
+    private static final String URL_SERVER = "http://10.231.168.33:8000/";
     private static final String URL_FACEBOOKSIGNUP = URL_SERVER + "facebook-signup/";
     private static final String URL_SHAREMANAGER = URL_SERVER + "sharemanager/";
     private static final String URL_USER = URL_SERVER + "users/";
@@ -44,7 +44,6 @@ public class HttpHelper {
     private Context mContext;
     private AsyncTask<String, Void, Void> mPendingTask = null;
     private static java.net.CookieManager msCookieManager = new java.net.CookieManager();
-    private String mCsrfToken = null;
 
     // Private constructor prevents instantiation from other classes
     private HttpHelper() { }

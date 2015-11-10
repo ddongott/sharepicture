@@ -1,26 +1,29 @@
 package com.example.ddong.xphoto;
 
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.ListView;
 
-public class SharedPhotoManager extends AppCompatActivity {
-    private final static String TAG = "SharedPhotoManager";
-    public final static String TABLE_NAME = "ReceivedPhoto";
+import org.json.JSONObject;
 
-    private XPDatabaseOperation mDB;
+public class ReceivedPhotoActivity extends AppCompatActivity {
+    private final static String TAG = "ReceivedPhotoActivity";
+
+    ListView list;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_shared_photo_manager);
-        mDB = new XPDatabaseOperation(getApplicationContext(),TABLE_NAME);
 
-        //Intent intent = new Intent(this, SharedPhotoIntentService.class);
-        //intent.putExtra("message", "19");
-        //startService(intent);
+        list = (ListView)findViewById(R.id.received_photo_list);
+        /**************** Create Custom Adapter *********/
+        list.setAdapter( new ReceivedPhotoAdapter( getApplicationContext(), list ) );
     }
 
     @Override
@@ -44,4 +47,5 @@ public class SharedPhotoManager extends AppCompatActivity {
 
         return super.onOptionsItemSelected(item);
     }
+
 }

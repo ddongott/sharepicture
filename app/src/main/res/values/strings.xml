@@ -35,4 +35,7 @@
     <string name="fullscreen_btn_share">Share</string>
 
     <string name="gcm_notification">send you a secured photo</string>
+    <!--received_photo_item_layout title -->
+    <string name="received_photo_owner">From: </string>
+    <string name="received_photo_expire">Expire in: </string>
 </resources>

@@ -39,7 +39,7 @@
             android:label="@string/title_activity_photo_manager" >
         </activity>
         <activity
-            android:name=".SharedPhotoManager"
+            android:name=".ReceivedPhotoActivity"
             android:label="@string/title_activity_shared_photo_manager" >
         </activity>
         <activity
@@ -96,7 +96,7 @@
         </service>
 
         <service
-            android:name="com.example.ddong.xphoto.SharedPhotoIntentService"
+            android:name=".ReceivedPhotoIntentService"
             android:exported="false">
         </service>
     </application>

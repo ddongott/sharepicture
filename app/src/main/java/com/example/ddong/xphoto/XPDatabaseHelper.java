@@ -10,6 +10,10 @@ import android.util.Log;
  */
 public class XPDatabaseHelper extends SQLiteOpenHelper{
     private static final String DATABASE_NAME = "XP.db";
+    public final static String RECEIVED_TABLE_NAME = "ReceivedPhoto";
+    public final static String LOCAL_TABLE_NAME = "ProtectPhotos";
+
+
 
     private static final int DATABASE_VERSION = 2;
     private final String mTable;
@@ -23,12 +27,12 @@ public class XPDatabaseHelper extends SQLiteOpenHelper{
     // Method is called during creation of the database
     @Override
     public void onCreate(SQLiteDatabase database) {
-        final String CREATE_LOCAL_TABLE = "create table " + LocalGalleryActivity.TABLE_NAME +
+        final String CREATE_LOCAL_TABLE = "create table " + LOCAL_TABLE_NAME +
                 "( _id integer primary key autoincrement," +
                 "path text not null," +
                 "thumbnail text not null);";
 
-        final String CREATE_SHARE_TABLE = "create table " + SharedPhotoManager.TABLE_NAME +
+        final String CREATE_SHARE_TABLE = "create table " + RECEIVED_TABLE_NAME +
                 "( _id integer primary key autoincrement," +
                 "serverid text not null," +
                 "owner text not null," +
