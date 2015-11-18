@@ -36,7 +36,7 @@ import java.util.Map;
  */
 public class HttpHelper {
     private static final String TAG = "HttpHelper";
-    private static final String URL_SERVER = "http://10.231.168.33:8000/";
+    private static final String URL_SERVER = "http://192.168.0.113:8000/";
     private static final String URL_FACEBOOKSIGNUP = URL_SERVER + "facebook-signup/";
     private static final String URL_SHAREMANAGER = URL_SERVER + "sharemanager/";
     private static final String URL_USER = URL_SERVER + "users/";

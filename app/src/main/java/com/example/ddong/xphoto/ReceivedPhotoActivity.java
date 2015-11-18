@@ -23,7 +23,7 @@ public class ReceivedPhotoActivity extends AppCompatActivity {
 
         list = (ListView)findViewById(R.id.received_photo_list);
         /**************** Create Custom Adapter *********/
-        list.setAdapter( new ReceivedPhotoAdapter( getApplicationContext(), list ) );
+        list.setAdapter( new ReceivedPhotoAdapter( this, list ) );
     }
 
     @Override

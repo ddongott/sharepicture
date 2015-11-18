@@ -33,25 +33,27 @@ public class ReceivedPhotoAdapter extends BaseAdapter implements View.OnClickLis
     private XPDatabaseOperation mDB;
     Cursor mCursor = null;
     private static LayoutInflater inflater=null;
-    private LoadDataTask mPendingTask = null;
+    private LoadDataTask mLoadingTask;
     private ProgressDialog mWaitingDialog;
     private int mDataOffset;
+    private Context mContext;
 
     /*************  CustomAdapter Constructor *****************/
-    public ReceivedPhotoAdapter(Context context, ListView list) {
-
+    public ReceivedPhotoAdapter(Activity activity, ListView list) {
+        mContext = activity.getApplicationContext();
         /***********  Layout inflator to call external xml layout () ***********/
-        inflater = ( LayoutInflater )context.
+        inflater = ( LayoutInflater )mContext.
                 getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 
         list.setOnScrollListener(new RPScrollListener());
-        mWaitingDialog = new ProgressDialog(context);
-        mDB = new XPDatabaseOperation(context,XPDatabaseHelper.RECEIVED_TABLE_NAME);
+        mWaitingDialog = new ProgressDialog(activity);
+        mDB = new XPDatabaseOperation(mContext,XPDatabaseHelper.RECEIVED_TABLE_NAME);
         String[] cols = new String[] {"_id", "serverid", "owner","data"};
         mCursor = mDB.selectRecords(cols);
         mData = new ArrayList<>();
         mDataOffset = 0;
-        new LoadDataTask().execute(0);
+        mLoadingTask= new LoadDataTask();
+        mLoadingTask.execute(0);
     }
 
     /******** What is the size of Passed Arraylist Size ************/
@@ -60,10 +62,12 @@ public class ReceivedPhotoAdapter extends BaseAdapter implements View.OnClickLis
     }
 
     public Object getItem(int position) {
+        Log.d(TAG,"getItem at: " + position);
         return position;
     }
 
     public long getItemId(int position) {
+        Log.d(TAG,"getItemId at: " + position);
         return position;
     }
 
@@ -100,10 +104,11 @@ public class ReceivedPhotoAdapter extends BaseAdapter implements View.OnClickLis
         else
             holder=(ViewHolder)vi.getTag();
 
-        if(mPendingTask != null) {
+        while(mLoadingTask.getStatus() == AsyncTask.Status.RUNNING) {
             mWaitingDialog.show();
         }
-        else if(position > mData.size() + mDataOffset || position < mDataOffset)
+
+        if(position > mData.size() + mDataOffset || position < mDataOffset)
         {
             if(position > mData.size() + mDataOffset) {
                 mDataOffset = position;
@@ -113,10 +118,12 @@ public class ReceivedPhotoAdapter extends BaseAdapter implements View.OnClickLis
         }
         else
         {
+
             /***** Get each Model object from Arraylist ********/
             ImageItem item = ( ImageItem ) mData.get(position);
 
             /************  Set Model values in Holder elements ***********/
+            Log.d(TAG, "Position: " + position + ", mData owner:  "+item.getOwner());
 
             holder.textOwner.setText(item.getOwner() );
             //holder.expireTimer.setFormat24Hour("");
@@ -177,9 +184,6 @@ public class ReceivedPhotoAdapter extends BaseAdapter implements View.OnClickLis
     }
 
     private class LoadDataTask extends AsyncTask<Integer, Integer, ArrayList<ImageItem>> {
-        public void LoadDataTask() {
-            mPendingTask = this;
-        }
 
         @Override
         protected ArrayList<ImageItem> doInBackground(Integer... params) {
@@ -196,7 +200,8 @@ public class ReceivedPhotoAdapter extends BaseAdapter implements View.OnClickLis
                     int id = mCursor.getInt(mCursor.getColumnIndexOrThrow("_id"));
                     String serverid = mCursor.getString(mCursor.getColumnIndexOrThrow("serverid"));
                     String owner = mCursor.getString(mCursor.getColumnIndexOrThrow("owner"));
-                    String datapath = mCursor.getString(mCursor.getColumnIndexOrThrow("data"));
+                    String filename = mCursor.getString(mCursor.getColumnIndexOrThrow("data"));
+                    String datapath = mContext.getFilesDir() + "/" + filename;
                     BitmapFactory.Options options = new BitmapFactory.Options();
                     options.inJustDecodeBounds = true;
                     Bitmap bitmap = BitmapFactory.decodeFile(datapath, options);
@@ -208,6 +213,7 @@ public class ReceivedPhotoAdapter extends BaseAdapter implements View.OnClickLis
                     item.setOwner(owner);
                     mData.add(item);
                     publishProgress(i);
+                    Log.d(TAG, "Add photo from " + owner + " to "+mData.size());
                 }
             }
             catch (IllegalArgumentException e){
@@ -219,7 +225,6 @@ public class ReceivedPhotoAdapter extends BaseAdapter implements View.OnClickLis
         @Override
         protected void onCancelled(ArrayList<ImageItem> result) {
             Log.d(TAG, "onCancelled");
-            mPendingTask = null;
         }
 
         @Override
@@ -230,7 +235,7 @@ public class ReceivedPhotoAdapter extends BaseAdapter implements View.OnClickLis
         @Override
         protected void onPostExecute(ArrayList<ImageItem> result)
         {
-            mPendingTask = null;
+            mWaitingDialog.cancel();
         }
     }
 
