@@ -87,19 +87,25 @@ public class AccountManager {
             if(mLogin) {
                 String username = jobj.getString("username");
                 sharepreference.setUserName(username);
+                String user_id = jobj.getString("user_id");
+                sharepreference.setUserID(user_id);
                 String email = jobj.getString("email");
                 sharepreference.setEmail(email);
                 String first_name = jobj.getString("first_name");
                 sharepreference.setFirstName(first_name);
                 String last_name = jobj.getString("last_name");
                 sharepreference.setLastName(last_name);
-                String user_id = jobj.getString("user_id");
-                sharepreference.setUserID(user_id);
-                HttpHelper.getInstance().updateGCMToken(sharepreference.getGcmToken());
             }
         }
         catch (JSONException e) {
             Log.d(TAG,e.toString());
+        }
+        finally {
+            String gcmtoken = sharepreference.getGcmToken();
+            if(!gcmtoken.isEmpty()) {
+                HttpHelper.getInstance().updateGCMToken(gcmtoken);
+                Log.d(TAG, "updateGCMToken: " + sharepreference.getGcmToken());
+            }
         }
     }
 
