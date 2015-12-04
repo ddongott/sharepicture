@@ -1,5 +1,6 @@
 package com.example.ddong.xphoto;
 
+import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.database.Cursor;
@@ -23,6 +24,7 @@ public class ReceivedPhotoActivity extends AppCompatActivity {
     Cursor mCursor = null;
     private ProgressDialog mWaitingDialog;
     private Context mContext;
+    private Activity mActivity;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,6 +37,7 @@ public class ReceivedPhotoActivity extends AppCompatActivity {
         mWaitingDialog = new ProgressDialog(this);
 
         mContext = getApplicationContext();
+        mActivity = this;
         mDB = new XPDatabaseOperation(mContext,XPDatabaseHelper.RECEIVED_TABLE_NAME);
         String[] cols = new String[] {"_id", "serverid", "owner","data"};
         mCursor = mDB.selectRecords(cols);
@@ -116,7 +119,7 @@ public class ReceivedPhotoActivity extends AppCompatActivity {
         protected void onPostExecute(ArrayList<ImageItem> result)
         {
             /**************** Create Custom Adapter *********/
-            mList.setAdapter( new ReceivedPhotoAdapter( mContext, result ) );
+            mList.setAdapter( new ReceivedPhotoAdapter( mActivity, result ) );
             mWaitingDialog.cancel();
         }
     }

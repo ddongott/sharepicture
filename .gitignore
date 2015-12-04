@@ -6,5 +6,5 @@
 .idea/
 app/app.iml
 sharepicture.iml
-/facebook/facebook.iml
-/facebook/build
+facebook/facebook.iml
+facebook/build/

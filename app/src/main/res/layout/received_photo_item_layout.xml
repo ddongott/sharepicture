@@ -1,40 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent" android:layout_height="wrap_content">
+    android:layout_width="fill_parent" android:layout_height="wrap_content"
+    android:orientation="vertical">
 
     <ImageView
-        android:layout_width="@dimen/received_thumb_width"
-        android:layout_height="@dimen/received_thumb_height"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
         android:id="@+id/received_photo_thumb" />
 
 
     <LinearLayout
         android:layout_width="fill_parent"
-        android:layout_height="@dimen/received_thumb_height"
-        android:orientation="vertical">
-        <LinearLayout
+        android:layout_height="@dimen/received_photo_txt_height">
+        <TextView
+            android:layout_width="@dimen/txt_title_width"
+            android:layout_height="fill_parent"
+            android:text="@string/received_photo_owner"
+            android:textColor="#000000" />
+        <TextView
             android:layout_width="wrap_content"
-            android:layout_height="@dimen/half_received_thumb_height">
-            <TextView
-                android:layout_width="@dimen/txt_title_width"
-                android:layout_height="fill_parent"
-                android:text="@string/received_photo_owner" />
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="fill_parent"
-                android:id="@+id/received_photo_owner_txt"/>
-        </LinearLayout>
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="@dimen/half_received_thumb_height">
-            <TextView
-                android:layout_width="@dimen/txt_title_width"
-                android:layout_height="fill_parent"
-                android:text="@string/received_photo_expire" />
-            <TextClock
-                android:layout_width="wrap_content"
-                android:layout_height="@dimen/half_received_thumb_height"
-                android:id="@+id/expire_count_down_txt" />
-        </LinearLayout>
+            android:layout_height="fill_parent"
+            android:id="@+id/received_photo_owner_txt"
+            android:textColor="#000000" />
     </LinearLayout>
 </LinearLayout>

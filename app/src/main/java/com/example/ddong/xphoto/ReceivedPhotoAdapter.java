@@ -1,10 +1,13 @@
 package com.example.ddong.xphoto;
 
+import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Point;
 import android.os.AsyncTask;
 import android.util.Log;
+import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -25,17 +28,21 @@ public class ReceivedPhotoAdapter extends BaseAdapter implements View.OnClickLis
 
     private static LayoutInflater inflater=null;
     private Context mContext;
+    private Activity mActivity;
+    private Point mScreenSize = new Point();
     ArrayList<ImageItem> mData;
 
     /*************  CustomAdapter Constructor *****************/
-    public ReceivedPhotoAdapter(Context context, ArrayList<ImageItem> data) {
-        mContext = context;
+    public ReceivedPhotoAdapter(Activity activity, ArrayList<ImageItem> data) {
+        mActivity = activity;
+        mContext = activity.getApplicationContext();
         mData = data;
+
+        Display display = activity.getWindowManager().getDefaultDisplay();
+        display.getRealSize(mScreenSize);
         /***********  Layout inflator to call external xml layout () ***********/
         inflater = ( LayoutInflater )mContext.
                 getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-
-
     }
 
     /******** What is the size of Passed Arraylist Size ************/
@@ -57,7 +64,6 @@ public class ReceivedPhotoAdapter extends BaseAdapter implements View.OnClickLis
     public static class ViewHolder{
 
         public TextView textOwner;
-        public TextClock expireTimer;
         public ImageView image;
 
     }
@@ -77,7 +83,7 @@ public class ReceivedPhotoAdapter extends BaseAdapter implements View.OnClickLis
 
             holder = new ViewHolder();
             holder.textOwner = (TextView) vi.findViewById(R.id.received_photo_owner_txt);
-            holder.expireTimer = (TextClock) vi.findViewById(R.id.expire_count_down_txt);
+            //holder.expireTimer = (TextClock) vi.findViewById(R.id.expire_count_down_txt);
             holder.image=(ImageView)vi.findViewById(R.id.received_photo_thumb);
 
             /************  Set holder with LayoutInflater ************/
@@ -93,11 +99,13 @@ public class ReceivedPhotoAdapter extends BaseAdapter implements View.OnClickLis
         /************  Set Model values in Holder elements ***********/
         Log.d(TAG, "Position: " + position + ", mData owner:  "+item.getOwner());
 
-        holder.textOwner.setText(item.getOwner() );
+        holder.textOwner.setText(item.getOwner());
+        holder.image.setImageBitmap(decodeBitmap(item.getPath()));
         //holder.expireTimer.setFormat24Hour("");
         //holder.image.setImageBitmap(item.getImage());
-        DecodingTaskParams params = new DecodingTaskParams(item.getPath(), holder.image);
-        new BitmapDecodingTask().execute(params);
+        //DecodingTaskParams params = new DecodingTaskParams(item.getPath(), holder.image);
+        //new BitmapDecodingTask().execute(params);
+
 
         /******** Set Item Click Listner for LayoutInflater for each row *******/
         vi.setOnClickListener(new OnItemClickListener( position ));
@@ -152,20 +160,7 @@ public class ReceivedPhotoAdapter extends BaseAdapter implements View.OnClickLis
 
             // params comes from the execute() call: params[0] is the url.
             Log.d(TAG, "BitmapDecodingTask path: " + datapath);
-            //try {
-
-                    BitmapFactory.Options options = new BitmapFactory.Options();
-                    options.inJustDecodeBounds = true;
-                    Bitmap bitmap = BitmapFactory.decodeFile(datapath, options);
-                    options.inSampleSize = calculateInSampleSize(options, R.dimen.received_thumb_width, R.dimen.received_thumb_height);
-                    options.inJustDecodeBounds = false;
-                    bitmap = BitmapFactory.decodeFile(datapath, options);
-
-            //}
-            //catch (IllegalArgumentException e){
-            //    Log.e(TAG,e.toString());
-            //}
-            return bitmap;
+            return decodeBitmap(datapath);
         }
 
         @Override
@@ -176,7 +171,7 @@ public class ReceivedPhotoAdapter extends BaseAdapter implements View.OnClickLis
         }
     }
 
-    public static int calculateInSampleSize(
+    public int calculateInSampleSize(
             BitmapFactory.Options options, int reqWidth, int reqHeight) {
         // Raw height and width of image
         final int height = options.outHeight;
@@ -199,5 +194,15 @@ public class ReceivedPhotoAdapter extends BaseAdapter implements View.OnClickLis
         return inSampleSize;
     }
 
+    public Bitmap decodeBitmap(String datapath) {
+        BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inJustDecodeBounds = true;
+        Bitmap bitmap = BitmapFactory.decodeFile(datapath, options);
+        options.inSampleSize = calculateInSampleSize(options, mScreenSize.x, mScreenSize.y);
+        options.inJustDecodeBounds = false;
+        bitmap = BitmapFactory.decodeFile(datapath, options);
+        Log.d(TAG, "BitmapDecodingTask decoded size: " + options.outWidth + ", " + options.outHeight);
+        return bitmap;
+    }
 
 }

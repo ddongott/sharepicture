@@ -11,7 +11,7 @@
     <!-- values for received_photo_item_layout. -->
     <dimen name="received_thumb_width">64dp</dimen>
     <dimen name="received_thumb_height">64dp</dimen>
-    <dimen name="half_received_thumb_height">32dp</dimen>
+    <dimen name="received_photo_txt_height">48dp</dimen>
     <dimen name="txt_title_width">64dp</dimen>
 
 

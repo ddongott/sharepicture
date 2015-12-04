@@ -7,6 +7,7 @@ import android.content.Context;
  */
 public class XPUtils {
     static private boolean initialized = false;
+
     static public void Init(Context appContext) {
         if(!initialized) {
             SharePrefHelper.getInstance().setAppContext(appContext);
